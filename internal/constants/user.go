@@ -1,0 +1,34 @@
+package constants
+
+type (
+	UserRole    string
+	UserStatus  string
+	UserRoleMap map[UserRole]bool
+)
+
+const (
+	UserRoleAdmin UserRole = "admin"
+	UserRoleStaff UserRole = "staff"
+)
+
+const (
+	UserStatusActive = "Active"
+)
+
+func (receiver UserRole) IsValidEnum() bool {
+	switch receiver {
+	case UserRoleAdmin, UserRoleStaff:
+		return true
+	default:
+		return false
+	}
+}
+
+func (receiver UserStatus) IsValidEnum() bool {
+	switch receiver {
+	case UserStatusActive:
+		return true
+	default:
+		return false
+	}
+}
