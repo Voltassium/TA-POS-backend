@@ -8,6 +8,7 @@ const (
 	OrderStatusOpen      OrderStatus = "Open"
 	OrderStatusPaid      OrderStatus = "Paid"
 	OrderStatusCancelled OrderStatus = "Cancelled"
+	OrderStatusReady     OrderStatus = "Ready"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 func (receiver OrderStatus) IsValidEnum() bool {
 	switch receiver {
-	case OrderStatusOpen, OrderStatusPaid, OrderStatusCancelled:
+	case OrderStatusOpen, OrderStatusPaid, OrderStatusCancelled, OrderStatusReady:
 		return true
 	default:
 		return false

@@ -18,7 +18,7 @@ import (
 )
 
 type OrderService interface {
-	Create(ctx context.Context, payload requests.CreateOrder) (response.Order, error)
+	Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error)
 	List(ctx context.Context, payload requests.ListOrder) (dto.PaginationResponse[response.Order], error)
 	Detail(ctx context.Context, id int64) (response.OrderDetail, error)
 	UpdateStatus(ctx context.Context, id int64, payload requests.UpdateOrderStatus) error
@@ -37,18 +37,53 @@ func NewOrderSrv(orderRepo repository.OrderRepository, orderItemRepo repository.
 	return &orderService{orderRepo: orderRepo, orderItemRepo: orderItemRepo, productRepo: productRepo}
 }
 
-func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder) (response.Order, error) {
+func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error) {
 	staffID := authentication.GetUserDataFromToken(ctx).UserID
 	if staffID == 0 {
-		return response.Order{}, internal_err.NewDefaultError(http.StatusUnauthorized, "Invalid staff user")
+		return response.OrderDetail{}, internal_err.NewDefaultError(http.StatusUnauthorized, "Invalid staff user")
 	}
 
-	order := domainOrderFromCreate(payload, staffID)
-	if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
-		return response.Order{}, err
+	var orderID int64
+
+	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		order := domainOrderFromCreate(payload, staffID)
+		if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
+			return err
+		}
+		orderID = order.ID
+
+		if len(payload.Items) > 0 {
+			var totalAmount float64
+			for _, item := range payload.Items {
+				product, err := s.productRepo.GetProduct(ctx, item.ProductID)
+				if err != nil {
+					return err
+				}
+
+				orderItem := domainOrderItemFromCreate(order.ID, product.Price, item)
+				if err := s.orderItemRepo.CreateItem(ctx, &orderItem); err != nil {
+					return err
+				}
+				totalAmount += orderItem.Subtotal
+			}
+
+			if err := s.orderRepo.UpdateOrderTotal(ctx, order.ID, totalAmount); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.OrderDetail{}, err
 	}
 
-	return response.NewOrder(order), nil
+	order, err := s.orderRepo.GetOrder(ctx, orderID)
+	if err != nil {
+		return response.OrderDetail{}, err
+	}
+
+	return response.NewOrderDetail(order), nil
 }
 
 func (s *orderService) List(ctx context.Context, payload requests.ListOrder) (dto.PaginationResponse[response.Order], error) {
@@ -77,7 +112,7 @@ func (s *orderService) UpdateStatus(ctx context.Context, id int64, payload reque
 		return err
 	}
 
-	if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled {
+	if (order.Status == constants.OrderStatusPaid && payload.Status != constants.OrderStatusReady) || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
 		return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 	}
 
@@ -90,7 +125,7 @@ func (s *orderService) Cancel(ctx context.Context, id int64) error {
 		return err
 	}
 
-	if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled {
+	if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
 		return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 	}
 
@@ -105,7 +140,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID int64, payload reque
 			return err
 		}
 
-		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled {
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
@@ -150,7 +185,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 			return err
 		}
 
-		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled {
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 

@@ -18,6 +18,9 @@ func registerProduct(router *gin.RouterGroup) {
 		product.POST("", productCtl.Create)
 		product.PUT(":id", productCtl.Update)
 		product.DELETE(":id", productCtl.Delete)
+
+		stockHistoryCtl := controllers.NewStockHistoryController(services.ServicePool.StockHistoryService)
+		product.GET(":id/stock-histories", stockHistoryCtl.List)
 	}
 }
 

@@ -40,6 +40,7 @@ func RegisterV1(router *gin.Engine) {
 		registerProduct(private)
 		registerOrder(private)
 		registerPayment(private)
+		registerStatistics(private)
 	}
 
 }

@@ -13,6 +13,7 @@ type Product struct {
 	Description  string    `json:"description"`
 	Price        float64   `json:"price"`
 	IsAvailable  bool      `json:"is_available"`
+	Stock        int       `json:"stock"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -31,6 +32,7 @@ func NewProduct(product domain.Product) Product {
 		Description:  product.Description,
 		Price:        product.Price,
 		IsAvailable:  product.IsAvailable,
+		Stock:        product.Stock,
 		CreatedAt:    product.CreatedAt,
 		UpdatedAt:    product.UpdatedAt,
 	}

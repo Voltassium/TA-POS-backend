@@ -16,6 +16,7 @@ type Product struct {
 	Description string    `bun:"description"`
 	Price       float64   `bun:"price,notnull"`
 	IsAvailable bool      `bun:"is_available,notnull,default:true"`
+	Stock       int       `bun:"stock,notnull,default:0"`
 	Category    *Category `bun:"rel:belongs-to,join:category_id=id"`
 	CreatedAt   time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt   time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`

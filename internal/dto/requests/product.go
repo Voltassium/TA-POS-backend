@@ -11,6 +11,7 @@ type CreateProduct struct {
 	Description string  `json:"description" binding:"omitempty"`
 	Price       float64 `json:"price" binding:"required,gt=0"`
 	IsAvailable *bool   `json:"is_available" binding:"omitempty"`
+	Stock       int     `json:"stock" binding:"omitempty,gte=0"`
 }
 
 type UpdateProduct struct {
@@ -19,6 +20,7 @@ type UpdateProduct struct {
 	Description string  `json:"description" binding:"omitempty"`
 	Price       float64 `json:"price" binding:"omitempty,gt=0"`
 	IsAvailable *bool   `json:"is_available" binding:"omitempty"`
+	Stock       *int    `json:"stock" binding:"omitempty,gte=0"`
 }
 
 type ListProduct struct {
@@ -38,5 +40,6 @@ func (r CreateProduct) ToDomain() domain.Product {
 		Description: r.Description,
 		Price:       r.Price,
 		IsAvailable: isAvailable,
+		Stock:       r.Stock,
 	}
 }

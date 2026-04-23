@@ -6,7 +6,8 @@ import (
 )
 
 type CreateOrder struct {
-	TableID int64 `json:"table_id" binding:"required"`
+	TableID *int64         `json:"table_id" binding:"omitempty"`
+	Items   []AddOrderItem `json:"items" binding:"omitempty,dive"`
 }
 
 type UpdateOrderStatus struct {

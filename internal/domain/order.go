@@ -12,7 +12,7 @@ type Order struct {
 	bun.BaseModel `bun:"table:orders"`
 
 	ID          int64                 `bun:"id,pk,autoincrement"`
-	TableID     int64                 `bun:"table_id,notnull"`
+	TableID     *int64                `bun:"table_id"`
 	StaffID     int64                 `bun:"staff_id,notnull"`
 	TotalAmount float64               `bun:"total_amount,notnull,default:0"`
 	Status      constants.OrderStatus `bun:"status,notnull"`

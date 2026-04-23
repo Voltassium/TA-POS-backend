@@ -6,6 +6,8 @@ import (
 	"backend-ta/pkg/database"
 	"context"
 	"fmt"
+
+	"github.com/uptrace/bun"
 )
 
 type ProductRepository interface {
@@ -14,6 +16,7 @@ type ProductRepository interface {
 	DeleteProduct(ctx context.Context, id int64) error
 	GetProduct(ctx context.Context, id int64) (domain.Product, error)
 	ListProduct(ctx context.Context, req requests.ListProduct) ([]domain.Product, int, error)
+	UpdateStock(ctx context.Context, tx bun.Tx, productID int64, change int) error
 }
 
 type productRepository struct {
@@ -77,3 +80,13 @@ func (r *productRepository) ListProduct(ctx context.Context, req requests.ListPr
 	total, err := q.ScanAndCount(ctx)
 	return res, total, err
 }
+
+func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productID int64, change int) error {
+	_, err := tx.NewUpdate().
+		Model((*domain.Product)(nil)).
+		Set("stock = stock + ?", change).
+		Where("id = ?", productID).
+		Exec(ctx)
+	return err
+}
+

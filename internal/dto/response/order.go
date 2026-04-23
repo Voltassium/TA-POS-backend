@@ -8,7 +8,7 @@ import (
 
 type Order struct {
 	ID          int64                 `json:"id"`
-	TableID     int64                 `json:"table_id"`
+	TableID     *int64                `json:"table_id"`
 	StaffID     int64                 `json:"staff_id"`
 	TotalAmount float64               `json:"total_amount"`
 	Status      constants.OrderStatus `json:"status"`

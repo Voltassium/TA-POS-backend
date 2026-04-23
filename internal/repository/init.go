@@ -15,6 +15,8 @@ type PoolRepository struct {
 	OrderRepository     OrderRepository
 	OrderItemRepository OrderItemRepository
 	PaymentRepository   PaymentRepository
+	StockHistoryRepository StockHistoryRepository
+	StatisticsRepository   StatisticsRepository
 }
 
 func Init(db *database.Database) {
@@ -26,6 +28,8 @@ func Init(db *database.Database) {
 			OrderRepository:     NewOrderRepository(db),
 			OrderItemRepository: NewOrderItemRepository(db),
 			PaymentRepository:   NewPaymentRepository(db),
+			StockHistoryRepository: NewStockHistoryRepository(db),
+			StatisticsRepository:   NewStatisticsRepository(db),
 		}
 	})
 
