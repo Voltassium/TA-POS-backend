@@ -1,1 +1,0 @@
-ALTER TABLE orders ALTER COLUMN table_id SET NOT NULL;

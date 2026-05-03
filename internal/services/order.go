@@ -39,14 +39,15 @@ func NewOrderSrv(orderRepo repository.OrderRepository, orderItemRepo repository.
 
 func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error) {
 	staffID := authentication.GetUserDataFromToken(ctx).UserID
-	if staffID == 0 {
-		return response.OrderDetail{}, internal_err.NewDefaultError(http.StatusUnauthorized, "Invalid staff user")
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
+	if staffID == 0 || storeID == 0 {
+		return response.OrderDetail{}, internal_err.NewDefaultError(http.StatusUnauthorized, "Invalid user or store")
 	}
 
 	var orderID int64
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		order := domainOrderFromCreate(payload, staffID)
+		order := domainOrderFromCreate(payload, storeID, staffID)
 		if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
 			return err
 		}
@@ -67,7 +68,8 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 				totalAmount += orderItem.Subtotal
 			}
 
-			if err := s.orderRepo.UpdateOrderTotal(ctx, order.ID, totalAmount); err != nil {
+			finalTotal, discountAmount := computeOrderAmounts(totalAmount, &order)
+			if err := s.orderRepo.UpdateOrderAmounts(ctx, order.ID, finalTotal, discountAmount); err != nil {
 				return err
 			}
 		}
@@ -159,7 +161,8 @@ func (s *orderService) AddItem(ctx context.Context, orderID int64, payload reque
 			return err
 		}
 
-		if err := s.orderRepo.UpdateOrderTotal(ctx, orderID, total); err != nil {
+		finalTotal, discountAmount := computeOrderAmounts(total, &order)
+		if err := s.orderRepo.UpdateOrderAmounts(ctx, orderID, finalTotal, discountAmount); err != nil {
 			return err
 		}
 
@@ -206,7 +209,8 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 			return err
 		}
 
-		if err := s.orderRepo.UpdateOrderTotal(ctx, orderID, total); err != nil {
+		finalTotal, discountAmount := computeOrderAmounts(total, &order)
+		if err := s.orderRepo.UpdateOrderAmounts(ctx, orderID, finalTotal, discountAmount); err != nil {
 			return err
 		}
 
@@ -224,22 +228,70 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 	return response.NewOrderDetail(order), nil
 }
 
-func domainOrderFromCreate(payload requests.CreateOrder, staffID int64) domain.Order {
+func domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID int64) domain.Order {
+	var discountType *string
+	if payload.DiscountType != nil {
+		dt := string(*payload.DiscountType)
+		discountType = &dt
+	}
+
 	return domain.Order{
-		TableID:     payload.TableID,
-		StaffID:     staffID,
-		TotalAmount: 0,
-		Status:      constants.OrderStatusOpen,
+		StoreID:        storeID,
+		TableID:        payload.TableID,
+		StaffID:        staffID,
+		DiscountType:   discountType,
+		DiscountValue:  payload.DiscountValue,
+		TotalAmount:    0,
+		Status:         constants.OrderStatusOpen,
 	}
 }
 
 func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload requests.AddOrderItem) domain.OrderItem {
-	subtotal := unitPrice * float64(payload.Quantity)
-	return domain.OrderItem{
-		OrderID:   orderID,
-		ProductID: payload.ProductID,
-		Quantity:  payload.Quantity,
-		UnitPrice: unitPrice,
-		Subtotal:  subtotal,
+	baseSubtotal := unitPrice * float64(payload.Quantity)
+	
+	var discountAmount float64
+	var dtStr *string
+	if payload.DiscountType != nil {
+		dt := string(*payload.DiscountType)
+		dtStr = &dt
+		if *payload.DiscountType == constants.DiscountTypePercentage {
+			discountAmount = baseSubtotal * (payload.DiscountValue / 100)
+		} else if *payload.DiscountType == constants.DiscountTypeFixed {
+			discountAmount = payload.DiscountValue
+		}
 	}
+	
+	if discountAmount > baseSubtotal {
+		discountAmount = baseSubtotal
+	}
+	
+	subtotal := baseSubtotal - discountAmount
+
+	return domain.OrderItem{
+		OrderID:        orderID,
+		ProductID:      payload.ProductID,
+		Quantity:       payload.Quantity,
+		UnitPrice:      unitPrice,
+		DiscountType:   dtStr,
+		DiscountValue:  payload.DiscountValue,
+		DiscountAmount: discountAmount,
+		Subtotal:       subtotal,
+	}
+}
+
+func computeOrderAmounts(total float64, order *domain.Order) (finalTotal float64, discountAmount float64) {
+	discountAmount = 0.0
+	if order.DiscountType != nil {
+		if *order.DiscountType == string(constants.DiscountTypePercentage) {
+			discountAmount = total * (order.DiscountValue / 100)
+		} else if *order.DiscountType == string(constants.DiscountTypeFixed) {
+			discountAmount = order.DiscountValue
+		}
+	}
+	if discountAmount > total {
+		discountAmount = total
+	}
+	
+	finalTotal = total - discountAmount
+	return finalTotal, discountAmount
 }

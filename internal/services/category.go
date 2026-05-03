@@ -5,7 +5,10 @@ import (
 	"backend-ta/internal/dto/requests"
 	"backend-ta/internal/dto/response"
 	"backend-ta/internal/repository"
+	"backend-ta/pkg/authentication"
+	"backend-ta/pkg/errors"
 	"context"
+	"net/http"
 )
 
 type CategoryService interface {
@@ -25,7 +28,13 @@ func NewCategorySrv(categoryRepo repository.CategoryRepository) CategoryService 
 }
 
 func (s *categoryService) Create(ctx context.Context, payload requests.CreateCategory) (response.Category, error) {
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
+	if storeID == 0 {
+		return response.Category{}, errors.NewDefaultError(http.StatusUnauthorized, "Invalid store context")
+	}
+
 	category := payload.ToDomain()
+	category.StoreID = storeID
 	if err := s.categoryRepo.CreateCategory(ctx, &category); err != nil {
 		return response.Category{}, err
 	}

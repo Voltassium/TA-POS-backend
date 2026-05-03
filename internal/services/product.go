@@ -5,7 +5,10 @@ import (
 	"backend-ta/internal/dto/requests"
 	"backend-ta/internal/dto/response"
 	"backend-ta/internal/repository"
+	"backend-ta/pkg/authentication"
+	"backend-ta/pkg/errors"
 	"context"
+	"net/http"
 )
 
 type ProductService interface {
@@ -26,11 +29,17 @@ func NewProductSrv(productRepo repository.ProductRepository, categoryRepo reposi
 }
 
 func (s *productService) Create(ctx context.Context, payload requests.CreateProduct) (response.Product, error) {
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
+	if storeID == 0 {
+		return response.Product{}, errors.NewDefaultError(http.StatusUnauthorized, "Invalid store context")
+	}
+
 	if _, err := s.categoryRepo.GetCategory(ctx, payload.CategoryID); err != nil {
 		return response.Product{}, err
 	}
 
 	product := payload.ToDomain()
+	product.StoreID = storeID
 	if err := s.productRepo.CreateProduct(ctx, &product); err != nil {
 		return response.Product{}, err
 	}

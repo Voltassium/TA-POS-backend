@@ -27,16 +27,19 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 		log.Fatal("Failed to hash password", err)
 	}
 
+	storeID := int64(1)
 	users := []domain.User{
 		{
 			Email:    "admin@pos.com",
 			Password: hashedPassword,
 			Role:     constants.UserRoleAdmin,
+			StoreID:  &storeID,
 		},
 		{
 			Email:    "staff@pos.com",
 			Password: hashedPassword,
 			Role:     constants.UserRoleStaff,
+			StoreID:  &storeID,
 		},
 	}
 

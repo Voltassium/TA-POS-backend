@@ -4,6 +4,7 @@ import (
 	"backend-ta/internal/constants"
 	"backend-ta/internal/domain"
 	"backend-ta/internal/dto/requests"
+	"backend-ta/pkg/authentication"
 	"backend-ta/pkg/database"
 	"context"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 type OrderRepository interface {
 	CreateOrder(ctx context.Context, data *domain.Order) error
 	UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error
-	UpdateOrderTotal(ctx context.Context, id int64, total float64) error
+	UpdateOrderAmounts(ctx context.Context, id int64, total float64, discountAmount float64) error
 	GetOrder(ctx context.Context, id int64) (domain.Order, error)
 	ListOrders(ctx context.Context, req requests.ListOrder) ([]domain.Order, int, error)
 }
@@ -33,29 +34,35 @@ func (r *orderRepository) CreateOrder(ctx context.Context, data *domain.Order) e
 }
 
 func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error {
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
 		Model((*domain.Order)(nil)).
 		Set("status = ?", status).
 		Set("updated_at = NOW()").
 		Where("id = ?", id).
+		Where("store_id = ?", storeID).
 		Exec(ctx)
 	return err
 }
 
-func (r *orderRepository) UpdateOrderTotal(ctx context.Context, id int64, total float64) error {
+func (r *orderRepository) UpdateOrderAmounts(ctx context.Context, id int64, total float64, discountAmount float64) error {
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
 		Model((*domain.Order)(nil)).
 		Set("total_amount = ?", total).
+		Set("discount_amount = ?", discountAmount).
 		Set("updated_at = NOW()").
 		Where("id = ?", id).
+		Where("store_id = ?", storeID).
 		Exec(ctx)
 	return err
 }
 
 func (r *orderRepository) GetOrder(ctx context.Context, id int64) (domain.Order, error) {
 	var res domain.Order
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	err := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
@@ -64,15 +71,18 @@ func (r *orderRepository) GetOrder(ctx context.Context, id int64) (domain.Order,
 		}).
 		Relation("Payment").
 		Where("\"order\".id = ?", id).
+		Where("\"order\".store_id = ?", storeID).
 		Scan(ctx)
 	return res, err
 }
 
 func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder) ([]domain.Order, int, error) {
 	var res []domain.Order
+	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
+		Where("store_id = ?", storeID).
 		Limit(req.PageSize).
 		Offset(req.CalculateOffset()).
 		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))

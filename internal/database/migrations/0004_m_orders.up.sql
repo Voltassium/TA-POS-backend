@@ -1,9 +1,13 @@
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
-    table_id INTEGER NOT NULL,
+    table_id INTEGER,
     staff_id INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    discount_type VARCHAR(20) DEFAULT NULL,
+    discount_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL DEFAULT 'Open',
+    store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

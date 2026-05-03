@@ -1,1 +1,0 @@
-ALTER TABLE orders ALTER COLUMN table_id DROP NOT NULL;

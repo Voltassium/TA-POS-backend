@@ -6,15 +6,21 @@ import (
 )
 
 type UserAuth struct {
-	UserID int64              `json:"user_id"`
-	Email  string             `json:"email"`
-	Role   constants.UserRole `json:"role"`
+	UserID  int64              `json:"user_id"`
+	StoreID int64              `json:"store_id"`
+	Email   string             `json:"email"`
+	Role    constants.UserRole `json:"role"`
 }
 
 func ToTokenPayload(record domain.User) UserAuth {
+	storeID := int64(0)
+	if record.StoreID != nil {
+		storeID = *record.StoreID
+	}
 	return UserAuth{
-		UserID: record.ID,
-		Email:  record.Email,
-		Role:   record.Role,
+		UserID:  record.ID,
+		StoreID: storeID,
+		Email:   record.Email,
+		Role:    record.Role,
 	}
 }

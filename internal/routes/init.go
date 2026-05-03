@@ -35,6 +35,7 @@ func RegisterV1(router *gin.Engine) {
 		//-----------Private API-------------//
 		private := v1.Group("")
 		private.Use(middlewares.TokenAuthMiddleware())
+		registerStore(private)
 		registerUser(private)
 		registerCategory(private)
 		registerProduct(private)

@@ -6,8 +6,10 @@ import (
 )
 
 type CreateOrder struct {
-	TableID *int64         `json:"table_id" binding:"omitempty"`
-	Items   []AddOrderItem `json:"items" binding:"omitempty,dive"`
+	TableID       *int64                `json:"table_id" binding:"omitempty"`
+	DiscountType  *constants.DiscountType `json:"discount_type" binding:"omitempty,valid_enum"`
+	DiscountValue float64               `json:"discount_value" binding:"omitempty,min=0"`
+	Items         []AddOrderItem        `json:"items" binding:"omitempty,dive"`
 }
 
 type UpdateOrderStatus struct {

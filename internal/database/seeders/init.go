@@ -17,6 +17,7 @@ func SeedAll(db *bun.DB, fresh bool) error {
 			(*domain.Product)(nil),
 			(*domain.Category)(nil),
 			(*domain.User)(nil),
+			(*domain.Store)(nil),
 		}
 		for _, model := range models {
 			_, err := db.NewTruncateTable().Model(model).Cascade().Exec(ctx)
@@ -28,6 +29,10 @@ func SeedAll(db *bun.DB, fresh bool) error {
 	}
 
 	fmt.Println("Starting seeding...")
+
+	if err := SeedStores(ctx, db); err != nil {
+		return fmt.Errorf("error seeding stores: %w", err)
+	}
 
 	if err := SeedUsers(ctx, db); err != nil {
 		return fmt.Errorf("error seeding users: %w", err)

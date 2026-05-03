@@ -81,9 +81,10 @@ func (m *JWTManager) generateAccessToken(auth requests.UserAuth) (string, error)
 	expirationTime := time.Now().Add(m.expiryAccessToken)
 	claims := &AccessTokenClaims{
 		UserAuth: requests.UserAuth{
-			UserID: auth.UserID,
-			Email:  auth.Email,
-			Role:   auth.Role,
+			UserID:  auth.UserID,
+			StoreID: auth.StoreID,
+			Email:   auth.Email,
+			Role:    auth.Role,
 		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
