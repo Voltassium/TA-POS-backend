@@ -14,19 +14,17 @@ func registerCategory(router *gin.RouterGroup) {
 
 	category := router.Group("/categories")
 	{
-		category.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
-		category.POST("", categoryCtl.Create)
-		category.PUT(":id", categoryCtl.Update)
-		category.DELETE(":id", categoryCtl.Delete)
-	}
-}
+		// Staff and Admin can view categories
+		category.GET("", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), categoryCtl.List)
+		category.GET(":id", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), categoryCtl.Get)
 
-func registerCategoryPublic(router *gin.RouterGroup) {
-	categoryCtl := controllers.NewCategoryController(services.ServicePool.CategoryService)
-
-	category := router.Group("/categories")
-	{
-		category.GET("", categoryCtl.List)
-		category.GET(":id", categoryCtl.Get)
+		// Admin only
+		adminCategory := category.Group("")
+		adminCategory.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
+		{
+			adminCategory.POST("", categoryCtl.Create)
+			adminCategory.PUT(":id", categoryCtl.Update)
+			adminCategory.DELETE(":id", categoryCtl.Delete)
+		}
 	}
 }

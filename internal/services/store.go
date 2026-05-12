@@ -25,17 +25,9 @@ func NewStoreService(repo *repository.PoolRepository) StoreService {
 }
 
 func (s *storeService) CreateStore(ctx context.Context, req requests.CreateStore) (response.Store, error) {
-	isActive := true
-	if req.IsActive != nil {
-		isActive = *req.IsActive
-	}
-
 	store := domain.Store{
-		Name:     req.Name,
-		Address:  req.Address,
-		Phone:    req.Phone,
-		LogoURL:  req.LogoURL,
-		IsActive: isActive,
+		Name:    req.Name,
+		Address: req.Address,
 	}
 
 	err := s.repo.StoreRepository.CreateStore(ctx, &store)
@@ -65,15 +57,6 @@ func (s *storeService) UpdateStore(ctx context.Context, id int64, req requests.U
 	}
 	if req.Address != "" {
 		store.Address = req.Address
-	}
-	if req.Phone != "" {
-		store.Phone = req.Phone
-	}
-	if req.LogoURL != "" {
-		store.LogoURL = req.LogoURL
-	}
-	if req.IsActive != nil {
-		store.IsActive = *req.IsActive
 	}
 
 	err = s.repo.StoreRepository.UpdateStore(ctx, &store)

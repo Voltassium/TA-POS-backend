@@ -29,8 +29,6 @@ func RegisterV1(router *gin.Engine) {
 
 		//-----------Public API-------------//
 		registerAuth(v1)
-		registerCategoryPublic(v1)
-		registerProductPublic(v1)
 
 		//-----------Private API-------------//
 		private := v1.Group("")

@@ -11,25 +11,22 @@ import (
 
 func registerProduct(router *gin.RouterGroup) {
 	productCtl := controllers.NewProductController(services.ServicePool.ProductService)
+	stockHistoryCtl := controllers.NewStockHistoryController(services.ServicePool.StockHistoryService)
 
 	product := router.Group("/products")
 	{
-		product.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
-		product.POST("", productCtl.Create)
-		product.PUT(":id", productCtl.Update)
-		product.DELETE(":id", productCtl.Delete)
+		// Staff and Admin can view products and stock histories
+		product.GET("", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), productCtl.List)
+		product.GET(":id", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), productCtl.Get)
+		product.GET(":id/stock-histories", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), stockHistoryCtl.List)
 
-		stockHistoryCtl := controllers.NewStockHistoryController(services.ServicePool.StockHistoryService)
-		product.GET(":id/stock-histories", stockHistoryCtl.List)
-	}
-}
-
-func registerProductPublic(router *gin.RouterGroup) {
-	productCtl := controllers.NewProductController(services.ServicePool.ProductService)
-
-	product := router.Group("/products")
-	{
-		product.GET("", productCtl.List)
-		product.GET(":id", productCtl.Get)
+		// Admin only
+		adminProduct := product.Group("")
+		adminProduct.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
+		{
+			adminProduct.POST("", productCtl.Create)
+			adminProduct.PUT(":id", productCtl.Update)
+			adminProduct.DELETE(":id", productCtl.Delete)
+		}
 	}
 }

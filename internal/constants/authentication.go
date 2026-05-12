@@ -9,8 +9,3 @@ const (
 )
 
 type LoginType string
-
-const (
-	LoginTypeEmail LoginType = "email"
-	LoginTypePhone LoginType = "phone"
-)

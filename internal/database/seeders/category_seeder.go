@@ -20,10 +20,11 @@ func SeedCategories(ctx context.Context, db *bun.DB) error {
 	}
 
 	categories := []domain.Category{
-		{StoreID: 1, Name: "Minuman", ImageURL: "https://placehold.co/400x400?text=Minuman"},
-		{StoreID: 1, Name: "Makanan", ImageURL: "https://placehold.co/400x400?text=Makanan"},
-		{StoreID: 1, Name: "Cemilan", ImageURL: "https://placehold.co/400x400?text=Cemilan"},
-		{StoreID: 1, Name: "Pencuci Mulut", ImageURL: "https://placehold.co/400x400?text=Pencuci+Mulut"},
+		{StoreID: 1, Name: "Kopi & Espresso", ImageURL: "https://placehold.co/400x400?text=Kopi+Espresso"},
+		{StoreID: 1, Name: "Minuman Segar", ImageURL: "https://placehold.co/400x400?text=Minuman+Segar"},
+		{StoreID: 1, Name: "Makanan Utama", ImageURL: "https://placehold.co/400x400?text=Makanan+Utama"},
+		{StoreID: 1, Name: "Roti & Pastry", ImageURL: "https://placehold.co/400x400?text=Roti+Pastry"},
+		{StoreID: 1, Name: "Camilan & Dessert", ImageURL: "https://placehold.co/400x400?text=Camilan+Dessert"},
 	}
 
 	_, err = db.NewInsert().Model(&categories).Exec(ctx)

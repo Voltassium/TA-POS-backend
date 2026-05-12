@@ -13,9 +13,6 @@ type Store struct {
 	ID        int64     `bun:"id,pk,autoincrement"`
 	Name      string    `bun:"name,notnull"`
 	Address   string    `bun:"address"`
-	Phone     string    `bun:"phone"`
-	LogoURL   string    `bun:"logo_url"`
-	IsActive  bool      `bun:"is_active,notnull,default:true"`
 	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 }

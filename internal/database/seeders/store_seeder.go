@@ -3,6 +3,7 @@ package seeders
 import (
 	"backend-ta/internal/domain"
 	"context"
+	"fmt"
 
 	"github.com/uptrace/bun"
 )
@@ -10,18 +11,14 @@ import (
 func SeedStores(ctx context.Context, db *bun.DB) error {
 	stores := []domain.Store{
 		{
-			ID:       1,
-			Name:     "Main Store",
-			Address:  "123 Main Street, City",
-			Phone:    "+6281234567890",
-			IsActive: true,
+			ID:      1,
+			Name:    "Kopi Senja - Sudirman",
+			Address: "Jl. Jend. Sudirman Kav. 52-53, Senayan, Kebayoran Baru, Jakarta Selatan",
 		},
 		{
-			ID:       2,
-			Name:     "Branch Store",
-			Address:  "456 Branch Avenue, City",
-			Phone:    "+6280987654321",
-			IsActive: true,
+			ID:      2,
+			Name:    "Kopi Senja - Kemang",
+			Address: "Jl. Kemang Raya No. 45, Bangka, Mampang Prapatan, Jakarta Selatan",
 		},
 	}
 
@@ -32,5 +29,6 @@ func SeedStores(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
+	fmt.Println("Stores seeded successfully")
 	return nil
 }
