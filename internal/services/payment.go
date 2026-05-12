@@ -10,7 +10,6 @@ import (
 	internal_err "backend-ta/pkg/errors"
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/uptrace/bun"
@@ -71,24 +70,6 @@ func (s *paymentService) Process(ctx context.Context, payload requests.CreatePay
 
 		if err := s.orderRepo.UpdateOrderStatus(ctx, order.ID, constants.OrderStatusPaid); err != nil {
 			return err
-		}
-
-		// Update stock and history for each order item
-		for _, item := range order.OrderItems {
-			// Decrease stock
-			if err := s.productRepo.UpdateStock(ctx, tx, item.ProductID, -item.Quantity); err != nil {
-				return err
-			}
-
-			// Create history
-			history := domain.StockHistory{
-				ProductID: item.ProductID,
-				Change:    -item.Quantity,
-				Reason:    fmt.Sprintf("Order #%d Paid", order.ID),
-			}
-			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
-				return err
-			}
 		}
 
 		return nil

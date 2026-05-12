@@ -29,4 +29,9 @@ func registerProduct(router *gin.RouterGroup) {
 			adminProduct.DELETE(":id", productCtl.Delete)
 		}
 	}
+
+	stockHistories := router.Group("/stock-histories")
+	{
+		stockHistories.GET("", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), stockHistoryCtl.List)
+	}
 }

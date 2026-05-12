@@ -90,6 +90,9 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 	if req.Status != "" {
 		q.Where("status = ?", req.Status)
 	}
+	if req.ExcludeStatus != "" {
+		q.Where("status != ?", req.ExcludeStatus)
+	}
 
 	total, err := q.ScanAndCount(ctx)
 	return res, total, err

@@ -4,5 +4,5 @@ import "backend-ta/internal/dto"
 
 type ListStockHistory struct {
 	dto.PaginationRequest
-	ProductID int64 `form:"product_id" binding:"required"`
+	ProductID int64 `form:"product_id"`
 }

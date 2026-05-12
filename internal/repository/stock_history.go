@@ -33,9 +33,13 @@ func (r *stockHistoryRepository) ListStockHistory(ctx context.Context, req reque
 	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
-		Relation("Product").
-		Where("stock_history.product_id = ?", req.ProductID).
-		Limit(req.PageSize).
+		Relation("Product")
+
+	if req.ProductID != 0 {
+		q.Where("stock_history.product_id = ?", req.ProductID)
+	}
+
+	q.Limit(req.PageSize).
 		Offset(req.CalculateOffset()).
 		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
 

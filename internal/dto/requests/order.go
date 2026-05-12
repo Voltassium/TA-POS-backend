@@ -18,5 +18,6 @@ type UpdateOrderStatus struct {
 
 type ListOrder struct {
 	dto.PaginationRequest
-	Status constants.OrderStatus `form:"status" binding:"omitempty,valid_enum"`
+	Status        constants.OrderStatus `form:"status" binding:"omitempty,valid_enum"`
+	ExcludeStatus constants.OrderStatus `form:"exclude_status" binding:"omitempty,valid_enum"`
 }

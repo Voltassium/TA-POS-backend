@@ -12,6 +12,7 @@ import (
 	internal_err "backend-ta/pkg/errors"
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/uptrace/bun"
@@ -28,13 +29,24 @@ type OrderService interface {
 }
 
 type orderService struct {
-	orderRepo     repository.OrderRepository
-	orderItemRepo repository.OrderItemRepository
-	productRepo   repository.ProductRepository
+	orderRepo        repository.OrderRepository
+	orderItemRepo    repository.OrderItemRepository
+	productRepo      repository.ProductRepository
+	stockHistoryRepo repository.StockHistoryRepository
 }
 
-func NewOrderSrv(orderRepo repository.OrderRepository, orderItemRepo repository.OrderItemRepository, productRepo repository.ProductRepository) OrderService {
-	return &orderService{orderRepo: orderRepo, orderItemRepo: orderItemRepo, productRepo: productRepo}
+func NewOrderSrv(
+	orderRepo repository.OrderRepository,
+	orderItemRepo repository.OrderItemRepository,
+	productRepo repository.ProductRepository,
+	stockHistoryRepo repository.StockHistoryRepository,
+) OrderService {
+	return &orderService{
+		orderRepo:        orderRepo,
+		orderItemRepo:    orderItemRepo,
+		productRepo:      productRepo,
+		stockHistoryRepo: stockHistoryRepo,
+	}
 }
 
 func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error) {
@@ -61,11 +73,27 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 					return err
 				}
 
+				if product.Stock < item.Quantity {
+					return internal_err.NewDefaultError(http.StatusBadRequest, fmt.Sprintf("Not enough stock for product: %s", product.Name))
+				}
+
 				orderItem := domainOrderItemFromCreate(order.ID, product.Price, item)
 				if err := s.orderItemRepo.CreateItem(ctx, &orderItem); err != nil {
 					return err
 				}
 				totalAmount += orderItem.Subtotal
+
+				if err := s.productRepo.UpdateStock(ctx, tx, item.ProductID, -item.Quantity); err != nil {
+					return err
+				}
+				history := domain.StockHistory{
+					ProductID: item.ProductID,
+					Change:    -item.Quantity,
+					Reason:    fmt.Sprintf("Order #%d Created", order.ID),
+				}
+				if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
+					return err
+				}
 			}
 
 			finalTotal, discountAmount := computeOrderAmounts(totalAmount, &order)
@@ -122,16 +150,36 @@ func (s *orderService) UpdateStatus(ctx context.Context, id int64, payload reque
 }
 
 func (s *orderService) Cancel(ctx context.Context, id int64) error {
-	order, err := s.orderRepo.GetOrder(ctx, id)
-	if err != nil {
-		return err
-	}
+	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		order, err := s.orderRepo.GetOrder(ctx, id)
+		if err != nil {
+			return err
+		}
 
-	if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
-		return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
-	}
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
+			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
+		}
 
-	return s.orderRepo.UpdateOrderStatus(ctx, id, constants.OrderStatusCancelled)
+		if err := s.orderRepo.UpdateOrderStatus(ctx, id, constants.OrderStatusCancelled); err != nil {
+			return err
+		}
+
+		for _, item := range order.OrderItems {
+			if err := s.productRepo.UpdateStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+				return err
+			}
+			history := domain.StockHistory{
+				ProductID: item.ProductID,
+				Change:    item.Quantity,
+				Reason:    fmt.Sprintf("Order #%d Cancelled", order.ID),
+			}
+			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
 }
 
 func (s *orderService) AddItem(ctx context.Context, orderID int64, payload requests.AddOrderItem) (response.OrderDetail, error) {
@@ -151,8 +199,24 @@ func (s *orderService) AddItem(ctx context.Context, orderID int64, payload reque
 			return err
 		}
 
+		if product.Stock < payload.Quantity {
+			return internal_err.NewDefaultError(http.StatusBadRequest, fmt.Sprintf("Not enough stock for product: %s", product.Name))
+		}
+
 		item := domainOrderItemFromCreate(orderID, product.Price, payload)
 		if err := s.orderItemRepo.CreateItem(ctx, &item); err != nil {
+			return err
+		}
+
+		if err := s.productRepo.UpdateStock(ctx, tx, payload.ProductID, -payload.Quantity); err != nil {
+			return err
+		}
+		history := domain.StockHistory{
+			ProductID: payload.ProductID,
+			Change:    -payload.Quantity,
+			Reason:    fmt.Sprintf("Item added to Order #%d", order.ID),
+		}
+		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err
 		}
 
@@ -204,6 +268,18 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 			return err
 		}
 
+		if err := s.productRepo.UpdateStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+			return err
+		}
+		history := domain.StockHistory{
+			ProductID: item.ProductID,
+			Change:    item.Quantity,
+			Reason:    fmt.Sprintf("Item removed from Order #%d", order.ID),
+		}
+		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
+			return err
+		}
+
 		total, err := s.orderItemRepo.SumSubtotalByOrder(ctx, orderID)
 		if err != nil {
 			return err
@@ -236,19 +312,19 @@ func domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID 
 	}
 
 	return domain.Order{
-		StoreID:        storeID,
-		TableID:        payload.TableID,
-		StaffID:        staffID,
-		DiscountType:   discountType,
-		DiscountValue:  payload.DiscountValue,
-		TotalAmount:    0,
-		Status:         constants.OrderStatusOpen,
+		StoreID:       storeID,
+		TableID:       payload.TableID,
+		StaffID:       staffID,
+		DiscountType:  discountType,
+		DiscountValue: payload.DiscountValue,
+		TotalAmount:   0,
+		Status:        constants.OrderStatusOpen,
 	}
 }
 
 func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload requests.AddOrderItem) domain.OrderItem {
 	baseSubtotal := unitPrice * float64(payload.Quantity)
-	
+
 	var discountAmount float64
 	var dtStr *string
 	if payload.DiscountType != nil {
@@ -260,11 +336,11 @@ func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload request
 			discountAmount = payload.DiscountValue
 		}
 	}
-	
+
 	if discountAmount > baseSubtotal {
 		discountAmount = baseSubtotal
 	}
-	
+
 	subtotal := baseSubtotal - discountAmount
 
 	return domain.OrderItem{
@@ -291,7 +367,7 @@ func computeOrderAmounts(total float64, order *domain.Order) (finalTotal float64
 	if discountAmount > total {
 		discountAmount = total
 	}
-	
+
 	finalTotal = total - discountAmount
 	return finalTotal, discountAmount
 }

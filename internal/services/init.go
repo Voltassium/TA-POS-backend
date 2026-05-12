@@ -29,7 +29,7 @@ func Init() {
 			StoreService:        NewStoreService(repo),
 			CategoryService:     NewCategorySrv(repo.CategoryRepository),
 			ProductService:      NewProductSrv(repo.ProductRepository, repo.CategoryRepository),
-			OrderService:        NewOrderSrv(repo.OrderRepository, repo.OrderItemRepository, repo.ProductRepository),
+			OrderService:        NewOrderSrv(repo.OrderRepository, repo.OrderItemRepository, repo.ProductRepository, repo.StockHistoryRepository),
 			PaymentService:      NewPaymentSrv(repo.OrderRepository, repo.PaymentRepository, repo.ProductRepository, repo.StockHistoryRepository),
 			StockHistoryService: NewStockHistorySrv(repo.StockHistoryRepository),
 			StatisticsService:   NewStatisticsSrv(repo.StatisticsRepository),

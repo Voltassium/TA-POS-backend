@@ -6,20 +6,27 @@ import (
 )
 
 type StockHistory struct {
-	ID        int64     `json:"id"`
-	ProductID int64     `json:"product_id"`
-	Change    int       `json:"change"`
-	Reason    string    `json:"reason"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          int64     `json:"id"`
+	ProductID   int64     `json:"product_id"`
+	ProductName string    `json:"product_name"`
+	Change      int       `json:"change"`
+	Reason      string    `json:"reason"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func NewStockHistory(history domain.StockHistory) StockHistory {
+	var productName string
+	if history.Product != nil {
+		productName = history.Product.Name
+	}
+
 	return StockHistory{
-		ID:        history.ID,
-		ProductID: history.ProductID,
-		Change:    history.Change,
-		Reason:    history.Reason,
-		CreatedAt: history.CreatedAt,
+		ID:          history.ID,
+		ProductID:   history.ProductID,
+		ProductName: productName,
+		Change:      history.Change,
+		Reason:      history.Reason,
+		CreatedAt:   history.CreatedAt,
 	}
 }
 

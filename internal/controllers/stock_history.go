@@ -21,9 +21,9 @@ func NewStockHistoryController(service services.StockHistoryService) StockHistor
 
 func (ctl *StockHistoryController) List(ctx *gin.Context) {
 	id, err := internalHTTP.BindParams[int64](ctx, "id")
-	if err != nil {
-		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
-		return
+	var productID int64
+	if err == nil {
+		productID = id
 	}
 
 	var req requests.ListStockHistory
@@ -31,7 +31,9 @@ func (ctl *StockHistoryController) List(ctx *gin.Context) {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
 	}
-	req.ProductID = id
+	if productID != 0 {
+		req.ProductID = productID
+	}
 
 	res, err := ctl.service.List(ctx.Request.Context(), req)
 	if err != nil {
