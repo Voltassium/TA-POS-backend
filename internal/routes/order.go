@@ -12,6 +12,7 @@ import (
 func registerOrder(router *gin.RouterGroup) {
 	orderCtl := controllers.NewOrderController(services.ServicePool.OrderService)
 	orderItemCtl := controllers.NewOrderItemController(services.ServicePool.OrderService)
+	kitchenCtl := controllers.NewKitchenController(services.ServicePool.KitchenService)
 
 	order := router.Group("/orders")
 	order.Use(middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff))
@@ -24,5 +25,9 @@ func registerOrder(router *gin.RouterGroup) {
 
 		order.POST(":id/items", orderItemCtl.AddItem)
 		order.DELETE(":id/items/:item_id", orderItemCtl.RemoveItem)
+
+		// Kitchen: update served quantity per item
+		order.PATCH(":id/items/:item_id/served", kitchenCtl.UpdateItemServedQty)
 	}
 }
+

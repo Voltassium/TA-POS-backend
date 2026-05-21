@@ -18,6 +18,7 @@ type PoolService struct {
 	PaymentService      PaymentService
 	StockHistoryService StockHistoryService
 	StatisticsService   StatisticsService
+	KitchenService      KitchenService
 }
 
 func Init() {
@@ -33,6 +34,7 @@ func Init() {
 			PaymentService:      NewPaymentSrv(repo.OrderRepository, repo.PaymentRepository, repo.ProductRepository, repo.StockHistoryRepository),
 			StockHistoryService: NewStockHistorySrv(repo.StockHistoryRepository),
 			StatisticsService:   NewStatisticsSrv(repo.StatisticsRepository),
+			KitchenService:      NewKitchenSrv(repo.OrderRepository, repo.OrderItemRepository),
 		}
 
 	})

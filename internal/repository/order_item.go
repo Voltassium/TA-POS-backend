@@ -11,6 +11,8 @@ type OrderItemRepository interface {
 	DeleteItem(ctx context.Context, id int64) error
 	GetItem(ctx context.Context, id int64) (domain.OrderItem, error)
 	SumSubtotalByOrder(ctx context.Context, orderID int64) (float64, error)
+	UpdateServedQty(ctx context.Context, itemID int64, servedQty int) error
+	ListItemsByOrder(ctx context.Context, orderID int64) ([]domain.OrderItem, error)
 }
 
 type orderItemRepository struct {
@@ -54,4 +56,25 @@ func (r *orderItemRepository) SumSubtotalByOrder(ctx context.Context, orderID in
 		Where("order_id = ?", orderID).
 		Scan(ctx, &total)
 	return total, err
+}
+
+func (r *orderItemRepository) UpdateServedQty(ctx context.Context, itemID int64, servedQty int) error {
+	_, err := r.db.InitQuery(ctx).
+		NewUpdate().
+		Model((*domain.OrderItem)(nil)).
+		Set("served_qty = ?", servedQty).
+		Set("updated_at = NOW()").
+		Where("id = ?", itemID).
+		Exec(ctx)
+	return err
+}
+
+func (r *orderItemRepository) ListItemsByOrder(ctx context.Context, orderID int64) ([]domain.OrderItem, error) {
+	var items []domain.OrderItem
+	err := r.db.InitQuery(ctx).
+		NewSelect().
+		Model(&items).
+		Where("order_id = ?", orderID).
+		Scan(ctx)
+	return items, err
 }

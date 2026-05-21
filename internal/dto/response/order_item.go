@@ -16,6 +16,7 @@ type OrderItem struct {
 	DiscountValue  float64   `json:"discount_value"`
 	DiscountAmount float64   `json:"discount_amount"`
 	Subtotal       float64   `json:"subtotal"`
+	ServedQty      int       `json:"served_qty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -37,6 +38,7 @@ func NewOrderItem(item domain.OrderItem) OrderItem {
 		DiscountValue:  item.DiscountValue,
 		DiscountAmount: item.DiscountAmount,
 		Subtotal:       item.Subtotal,
+		ServedQty:      item.ServedQty,
 		CreatedAt:   item.CreatedAt,
 		UpdatedAt:   item.UpdatedAt,
 	}
