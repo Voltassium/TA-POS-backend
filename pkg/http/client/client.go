@@ -77,7 +77,7 @@ func (c *HTTPClient) Call(urls string, response interface{}, attributes RequestA
 	if attributes.Body != nil {
 		reqBody, err = json.Marshal(attributes.Body)
 		if err != nil {
-			return NewHTTPClientError(0, fmt.Sprintf("error marshaling body: %w", err))
+			return NewHTTPClientError(0, fmt.Sprintf("error marshaling body: %v", err))
 		}
 	}
 
@@ -118,7 +118,7 @@ func (c *HTTPClient) Call(urls string, response interface{}, attributes RequestA
 
 	if response != nil {
 		if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
-			return NewHTTPClientError(resp.StatusCode, fmt.Sprintf("error decoding response: %w", err))
+			return NewHTTPClientError(resp.StatusCode, fmt.Sprintf("error decoding response: %v", err))
 		}
 	}
 

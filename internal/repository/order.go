@@ -14,6 +14,7 @@ import (
 
 type OrderRepository interface {
 	CreateOrder(ctx context.Context, data *domain.Order) error
+	CountTodayOrders(ctx context.Context, storeID int64) (int, error)
 	UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error
 	UpdateOrderAmounts(ctx context.Context, id int64, total float64, discountAmount float64) error
 	GetOrder(ctx context.Context, id int64) (domain.Order, error)
@@ -31,6 +32,17 @@ func NewOrderRepository(db *database.Database) OrderRepository {
 func (r *orderRepository) CreateOrder(ctx context.Context, data *domain.Order) error {
 	_, err := r.db.InitQuery(ctx).NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
+}
+
+func (r *orderRepository) CountTodayOrders(ctx context.Context, storeID int64) (int, error) {
+	count, err := r.db.InitQuery(ctx).
+		NewSelect().
+		Model((*domain.Order)(nil)).
+		Where("store_id = ?", storeID).
+		Where("created_at >= CURRENT_DATE").
+		Where("created_at < CURRENT_DATE + INTERVAL '1 day'").
+		Count(ctx)
+	return count, err
 }
 
 func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error {

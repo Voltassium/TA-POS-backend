@@ -12,6 +12,7 @@ type Order struct {
 	bun.BaseModel `bun:"table:orders"`
 
 	ID             int64                 `bun:"id,pk,autoincrement"`
+	OrderCode      string                `bun:"order_code,notnull"`
 	StoreID        int64                 `bun:"store_id,notnull"`
 	TableID        *int64                `bun:"table_id"`
 	StaffID        int64                 `bun:"staff_id,notnull"`

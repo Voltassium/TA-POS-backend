@@ -8,6 +8,7 @@ import (
 
 type Order struct {
 	ID             int64                 `json:"id"`
+	OrderCode      string                `json:"order_code"`
 	TableID        *int64                `json:"table_id"`
 	StaffID        int64                 `json:"staff_id"`
 	TotalAmount    float64               `json:"total_amount"`
@@ -28,6 +29,7 @@ type OrderDetail struct {
 func NewOrder(order domain.Order) Order {
 	return Order{
 		ID:             order.ID,
+		OrderCode:      order.OrderCode,
 		TableID:        order.TableID,
 		StaffID:        order.StaffID,
 		TotalAmount:    order.TotalAmount,

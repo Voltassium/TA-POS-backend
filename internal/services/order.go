@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -59,7 +60,15 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 	var orderID int64
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		// Generate human-readable order code: YYYYMMDD-NNN
+		todayCount, err := s.orderRepo.CountTodayOrders(ctx, storeID)
+		if err != nil {
+			return err
+		}
+		orderCode := fmt.Sprintf("%s-%03d", time.Now().Format("20060102"), todayCount+1)
+
 		order := domainOrderFromCreate(payload, storeID, staffID)
+		order.OrderCode = orderCode
 		if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
 			return err
 		}
@@ -89,7 +98,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 				history := domain.StockHistory{
 					ProductID: item.ProductID,
 					Change:    -item.Quantity,
-					Reason:    fmt.Sprintf("Order #%d Created", order.ID),
+					Reason:    fmt.Sprintf("Order %s Created", order.OrderCode),
 				}
 				if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 					return err
@@ -171,7 +180,7 @@ func (s *orderService) Cancel(ctx context.Context, id int64) error {
 			history := domain.StockHistory{
 				ProductID: item.ProductID,
 				Change:    item.Quantity,
-				Reason:    fmt.Sprintf("Order #%d Cancelled", order.ID),
+				Reason:    fmt.Sprintf("Order %s Cancelled", order.OrderCode),
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -214,7 +223,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID int64, payload reque
 		history := domain.StockHistory{
 			ProductID: payload.ProductID,
 			Change:    -payload.Quantity,
-			Reason:    fmt.Sprintf("Item added to Order #%d", order.ID),
+			Reason:    fmt.Sprintf("Item added to Order %s", order.OrderCode),
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err
@@ -274,7 +283,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 		history := domain.StockHistory{
 			ProductID: item.ProductID,
 			Change:    item.Quantity,
-			Reason:    fmt.Sprintf("Item removed from Order #%d", order.ID),
+			Reason:    fmt.Sprintf("Item removed from Order %s", order.OrderCode),
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err
@@ -330,9 +339,10 @@ func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload request
 	if payload.DiscountType != nil {
 		dt := string(*payload.DiscountType)
 		dtStr = &dt
-		if *payload.DiscountType == constants.DiscountTypePercentage {
+		switch *payload.DiscountType {
+		case constants.DiscountTypePercentage:
 			discountAmount = baseSubtotal * (payload.DiscountValue / 100)
-		} else if *payload.DiscountType == constants.DiscountTypeFixed {
+		case constants.DiscountTypeFixed:
 			discountAmount = payload.DiscountValue
 		}
 	}
@@ -358,9 +368,10 @@ func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload request
 func computeOrderAmounts(total float64, order *domain.Order) (finalTotal float64, discountAmount float64) {
 	discountAmount = 0.0
 	if order.DiscountType != nil {
-		if *order.DiscountType == string(constants.DiscountTypePercentage) {
+		switch *order.DiscountType {
+		case string(constants.DiscountTypePercentage):
 			discountAmount = total * (order.DiscountValue / 100)
-		} else if *order.DiscountType == string(constants.DiscountTypeFixed) {
+		case string(constants.DiscountTypeFixed):
 			discountAmount = order.DiscountValue
 		}
 	}
