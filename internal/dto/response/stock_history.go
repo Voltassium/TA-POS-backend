@@ -7,7 +7,7 @@ import (
 
 type StockHistory struct {
 	ID          int64     `json:"id"`
-	ProductID   int64     `json:"product_id"`
+	ProductID   string    `json:"product_id"`
 	ProductName string    `json:"product_name"`
 	Change      int       `json:"change"`
 	Reason      string    `json:"reason"`

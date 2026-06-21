@@ -13,9 +13,9 @@ import (
 
 type ProductService interface {
 	Create(ctx context.Context, payload requests.CreateProduct) (response.Product, error)
-	Update(ctx context.Context, id int64, payload requests.UpdateProduct) error
-	Delete(ctx context.Context, id int64) error
-	Detail(ctx context.Context, id int64) (response.Product, error)
+	Update(ctx context.Context, id string, payload requests.UpdateProduct) error
+	Delete(ctx context.Context, id string) error
+	Detail(ctx context.Context, id string) (response.Product, error)
 	List(ctx context.Context, payload requests.ListProduct) (dto.PaginationResponse[response.Product], error)
 }
 
@@ -52,13 +52,13 @@ func (s *productService) Create(ctx context.Context, payload requests.CreateProd
 	return response.NewProduct(product), nil
 }
 
-func (s *productService) Update(ctx context.Context, id int64, payload requests.UpdateProduct) error {
+func (s *productService) Update(ctx context.Context, id string, payload requests.UpdateProduct) error {
 	product, err := s.productRepo.GetProduct(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if payload.CategoryID != 0 && payload.CategoryID != product.CategoryID {
+	if payload.CategoryID != "" && payload.CategoryID != product.CategoryID {
 		if _, err := s.categoryRepo.GetCategory(ctx, payload.CategoryID); err != nil {
 			return err
 		}
@@ -76,15 +76,28 @@ func (s *productService) Update(ctx context.Context, id int64, payload requests.
 	if payload.IsAvailable != nil {
 		product.IsAvailable = *payload.IsAvailable
 	}
+	if payload.SKU != nil {
+		product.SKU = payload.SKU
+	}
+	if payload.ProductType != "" {
+		product.ProductType = payload.ProductType
+		// If switching to Olahan, clear harga_beli
+		if payload.ProductType == "Olahan" {
+			product.HargaBeli = nil
+		}
+	}
+	if payload.HargaBeli != nil && product.ProductType == "Kulakan" {
+		product.HargaBeli = payload.HargaBeli
+	}
 
 	return s.productRepo.UpdateProduct(ctx, &product)
 }
 
-func (s *productService) Delete(ctx context.Context, id int64) error {
+func (s *productService) Delete(ctx context.Context, id string) error {
 	return s.productRepo.DeleteProduct(ctx, id)
 }
 
-func (s *productService) Detail(ctx context.Context, id int64) (response.Product, error) {
+func (s *productService) Detail(ctx context.Context, id string) (response.Product, error) {
 	product, err := s.productRepo.GetProduct(ctx, id)
 	if err != nil {
 		return response.Product{}, err

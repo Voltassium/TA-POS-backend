@@ -18,6 +18,7 @@ type PoolRepository struct {
 	PaymentRepository      PaymentRepository
 	StockHistoryRepository StockHistoryRepository
 	StatisticsRepository   StatisticsRepository
+	PengeluaranRepository  PengeluaranRepository
 }
 
 func Init(db *database.Database) {
@@ -32,6 +33,7 @@ func Init(db *database.Database) {
 			PaymentRepository:      NewPaymentRepository(db),
 			StockHistoryRepository: NewStockHistoryRepository(db),
 			StatisticsRepository:   NewStatisticsRepository(db),
+			PengeluaranRepository:  NewPengeluaranRepository(db),
 		}
 	})
 

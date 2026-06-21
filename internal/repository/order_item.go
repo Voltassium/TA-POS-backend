@@ -8,11 +8,11 @@ import (
 
 type OrderItemRepository interface {
 	CreateItem(ctx context.Context, data *domain.OrderItem) error
-	DeleteItem(ctx context.Context, id int64) error
-	GetItem(ctx context.Context, id int64) (domain.OrderItem, error)
-	SumSubtotalByOrder(ctx context.Context, orderID int64) (float64, error)
-	UpdateServedQty(ctx context.Context, itemID int64, servedQty int) error
-	ListItemsByOrder(ctx context.Context, orderID int64) ([]domain.OrderItem, error)
+	DeleteItem(ctx context.Context, id string) error
+	GetItem(ctx context.Context, id string) (domain.OrderItem, error)
+	SumSubtotalByOrder(ctx context.Context, orderID string) (float64, error)
+	UpdateServedQty(ctx context.Context, itemID string, servedQty int) error
+	ListItemsByOrder(ctx context.Context, orderID string) ([]domain.OrderItem, error)
 }
 
 type orderItemRepository struct {
@@ -28,7 +28,7 @@ func (r *orderItemRepository) CreateItem(ctx context.Context, data *domain.Order
 	return err
 }
 
-func (r *orderItemRepository) DeleteItem(ctx context.Context, id int64) error {
+func (r *orderItemRepository) DeleteItem(ctx context.Context, id string) error {
 	_, err := r.db.InitQuery(ctx).
 		NewDelete().
 		Model((*domain.OrderItem)(nil)).
@@ -37,7 +37,7 @@ func (r *orderItemRepository) DeleteItem(ctx context.Context, id int64) error {
 	return err
 }
 
-func (r *orderItemRepository) GetItem(ctx context.Context, id int64) (domain.OrderItem, error) {
+func (r *orderItemRepository) GetItem(ctx context.Context, id string) (domain.OrderItem, error) {
 	var res domain.OrderItem
 	err := r.db.InitQuery(ctx).
 		NewSelect().
@@ -47,7 +47,7 @@ func (r *orderItemRepository) GetItem(ctx context.Context, id int64) (domain.Ord
 	return res, err
 }
 
-func (r *orderItemRepository) SumSubtotalByOrder(ctx context.Context, orderID int64) (float64, error) {
+func (r *orderItemRepository) SumSubtotalByOrder(ctx context.Context, orderID string) (float64, error) {
 	var total float64
 	err := r.db.InitQuery(ctx).
 		NewSelect().
@@ -58,7 +58,7 @@ func (r *orderItemRepository) SumSubtotalByOrder(ctx context.Context, orderID in
 	return total, err
 }
 
-func (r *orderItemRepository) UpdateServedQty(ctx context.Context, itemID int64, servedQty int) error {
+func (r *orderItemRepository) UpdateServedQty(ctx context.Context, itemID string, servedQty int) error {
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
 		Model((*domain.OrderItem)(nil)).
@@ -69,7 +69,7 @@ func (r *orderItemRepository) UpdateServedQty(ctx context.Context, itemID int64,
 	return err
 }
 
-func (r *orderItemRepository) ListItemsByOrder(ctx context.Context, orderID int64) ([]domain.OrderItem, error) {
+func (r *orderItemRepository) ListItemsByOrder(ctx context.Context, orderID string) ([]domain.OrderItem, error) {
 	var items []domain.OrderItem
 	err := r.db.InitQuery(ctx).
 		NewSelect().

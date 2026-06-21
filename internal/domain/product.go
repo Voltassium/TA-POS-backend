@@ -10,9 +10,12 @@ import (
 type Product struct {
 	bun.BaseModel `bun:"table:products"`
 
-	ID          int64     `bun:"id,pk,autoincrement"`
+	ID          string    `bun:"id,pk,type:uuid,default:gen_random_uuid()"`
 	StoreID     int64     `bun:"store_id,notnull"`
-	CategoryID  int64     `bun:"category_id,notnull"`
+	ProductType string    `bun:"product_type,notnull,default:'Olahan'"`
+	CategoryID  string    `bun:"category_id,type:uuid,notnull"`
+	SKU         *string   `bun:"sku"`
+	HargaBeli   *float64  `bun:"harga_beli"`
 	Name        string    `bun:"name,notnull"`
 	Description string    `bun:"description"`
 	Price       float64   `bun:"price,notnull"`

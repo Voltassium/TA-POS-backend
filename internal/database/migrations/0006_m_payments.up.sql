@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS payments (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER UNIQUE NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
-    payment_method VARCHAR(50) NOT NULL,
-    amount_paid NUMERIC(12, 2) NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);

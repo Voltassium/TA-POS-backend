@@ -8,15 +8,17 @@ type SalesData struct {
 }
 
 type TopSellingProduct struct {
-	ProductID    int64   `json:"product_id"`
+	ProductID    string  `json:"product_id"`
 	ProductName  string  `json:"product_name"`
 	CategoryName string  `json:"category_name"`
 	Quantity     int     `json:"quantity"`
 }
 
 type DashboardStats struct {
-	TotalOrders  int64   `json:"total_orders"`
-	TotalRevenue float64 `json:"total_revenue"`
+	TotalOrders   int64   `json:"total_orders"`
+	TotalRevenue  float64 `json:"total_revenue"`
+	TotalProfit   float64 `json:"total_profit"`
+	TotalExpenses float64 `json:"total_expenses"`
 }
 
 type DashboardResponse struct {
@@ -46,8 +48,10 @@ func NewDashboardResponse(stats domain.DashboardStats, sales []domain.SalesData,
 
 	return DashboardResponse{
 		Stats: DashboardStats{
-			TotalOrders:  stats.TotalOrders,
-			TotalRevenue: stats.TotalRevenue,
+			TotalOrders:   stats.TotalOrders,
+			TotalRevenue:  stats.TotalRevenue,
+			TotalProfit:   stats.TotalProfit,
+			TotalExpenses: stats.TotalExpenses,
 		},
 		SalesChart:  salesData,
 		TopProducts: topProducts,

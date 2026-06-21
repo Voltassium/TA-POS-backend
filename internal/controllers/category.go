@@ -52,7 +52,7 @@ func (ctl *CategoryController) List(ctx *gin.Context) {
 }
 
 func (ctl *CategoryController) Get(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -68,7 +68,7 @@ func (ctl *CategoryController) Get(ctx *gin.Context) {
 }
 
 func (ctl *CategoryController) Update(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -89,7 +89,7 @@ func (ctl *CategoryController) Update(ctx *gin.Context) {
 }
 
 func (ctl *CategoryController) Delete(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return

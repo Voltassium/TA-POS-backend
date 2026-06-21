@@ -13,7 +13,7 @@ func registerPayment(router *gin.RouterGroup) {
 	paymentCtl := controllers.NewPaymentController(services.ServicePool.PaymentService)
 
 	payment := router.Group("/payments")
-	payment.Use(middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff))
+	payment.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleStaff))
 	{
 		payment.POST("", paymentCtl.Create)
 		payment.GET(":order_id", paymentCtl.GetByOrder)

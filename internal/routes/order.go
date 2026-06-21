@@ -15,7 +15,7 @@ func registerOrder(router *gin.RouterGroup) {
 	kitchenCtl := controllers.NewKitchenController(services.ServicePool.KitchenService)
 
 	order := router.Group("/orders")
-	order.Use(middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff))
+	order.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff))
 	{
 		order.GET("", orderCtl.List)
 		order.GET(":id", orderCtl.Get)

@@ -2,6 +2,7 @@ package services
 
 import (
 	"backend-ta/internal/constants"
+	"backend-ta/internal/domain"
 	"backend-ta/internal/dto"
 	"backend-ta/internal/dto/requests"
 	"backend-ta/internal/dto/response"
@@ -13,17 +14,21 @@ import (
 type UserService interface {
 	Register(ctx context.Context, payload requests.CreateUser) error
 	GetList(ctx context.Context, payload requests.ListUser) (dto.PaginationResponse[response.User], error)
-	Update(ctx context.Context, id int64, payload requests.UpdateUser) error
-	DeleteSrv(ctx context.Context, id int64) error
-	Detail(ctx context.Context, id int64) (response.User, error)
+	Update(ctx context.Context, id string, payload requests.UpdateUser) error
+	DeleteSrv(ctx context.Context, id string) error
+	Detail(ctx context.Context, id string) (response.User, error)
 }
 
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo  repository.UserRepository
+	storeRepo repository.StoreRepository
 }
 
-func NewUserSrv(userRepo repository.UserRepository) UserService {
-	return &userService{userRepo: userRepo}
+func NewUserSrv(userRepo repository.UserRepository, storeRepo repository.StoreRepository) UserService {
+	return &userService{
+		userRepo:  userRepo,
+		storeRepo: storeRepo,
+	}
 }
 
 func (a *userService) Register(ctx context.Context, payload requests.CreateUser) error {
@@ -37,6 +42,20 @@ func (a *userService) Register(ctx context.Context, payload requests.CreateUser)
 		return err
 	}
 	user.Password = hashedPassword
+
+	if user.Role == constants.UserRoleOwner {
+		store := domain.Store{
+			Name:    payload.StoreName,
+			Address: payload.StoreAddress,
+		}
+		if store.Name == "" {
+			store.Name = "My Store" // Default name
+		}
+		if err := a.storeRepo.CreateStore(ctx, &store); err != nil {
+			return err
+		}
+		user.StoreID = &store.ID
+	}
 
 	return a.userRepo.CreateUser(ctx, &user)
 }
@@ -52,7 +71,7 @@ func (a *userService) GetList(ctx context.Context, payload requests.ListUser) (d
 	return paginateRes, nil
 }
 
-func (a *userService) Update(ctx context.Context, id int64, payload requests.UpdateUser) error {
+func (a *userService) Update(ctx context.Context, id string, payload requests.UpdateUser) error {
 	userData, err := a.userRepo.GetUser(ctx, id)
 	if err != nil {
 		return err
@@ -75,11 +94,11 @@ func (a *userService) Update(ctx context.Context, id int64, payload requests.Upd
 	return a.userRepo.UpdateUser(ctx, &userData)
 }
 
-func (a *userService) DeleteSrv(ctx context.Context, id int64) error {
+func (a *userService) DeleteSrv(ctx context.Context, id string) error {
 	return a.userRepo.DeleteUser(ctx, id)
 }
 
-func (a *userService) Detail(ctx context.Context, id int64) (response.User, error) {
+func (a *userService) Detail(ctx context.Context, id string) (response.User, error) {
 	var res response.User
 	data, err := a.userRepo.GetUser(ctx, id)
 	if err != nil {

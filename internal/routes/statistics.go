@@ -14,7 +14,7 @@ func registerStatistics(router *gin.RouterGroup) {
 
 	stats := router.Group("/statistics")
 	{
-		stats.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
+		stats.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner))
 		stats.GET("/dashboard", statsCtl.GetDashboardData)
 	}
 }

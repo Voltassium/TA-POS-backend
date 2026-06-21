@@ -22,7 +22,7 @@ type (
 		jwt.RegisteredClaims
 	}
 	RefreshTokenClaims struct {
-		UserID int64 `json:"user_id"`
+		UserID string `json:"user_id"`
 		jwt.RegisteredClaims
 	}
 	TokenPair struct {
@@ -99,7 +99,7 @@ func (m *JWTManager) generateAccessToken(auth requests.UserAuth) (string, error)
 	return token.SignedString(m.accessSecret)
 }
 
-func (m *JWTManager) generateRefreshToken(userID int64, subject string) (string, error) {
+func (m *JWTManager) generateRefreshToken(userID string, subject string) (string, error) {
 	expirationTime := time.Now().Add(m.expiryRefreshToken)
 
 	claims := &RefreshTokenClaims{

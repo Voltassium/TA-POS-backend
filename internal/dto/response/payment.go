@@ -7,8 +7,8 @@ import (
 )
 
 type Payment struct {
-	ID            int64                   `json:"id"`
-	OrderID       int64                   `json:"order_id"`
+	ID            string                  `json:"id"`
+	OrderID       string                  `json:"order_id"`
 	PaymentMethod constants.PaymentMethod `json:"payment_method"`
 	AmountPaid    float64                 `json:"amount_paid"`
 	Timestamp     time.Time               `json:"timestamp"`

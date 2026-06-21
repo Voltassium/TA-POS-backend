@@ -16,13 +16,13 @@ func registerProduct(router *gin.RouterGroup) {
 	product := router.Group("/products")
 	{
 		// Staff and Admin can view products and stock histories
-		product.GET("", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), productCtl.List)
-		product.GET(":id", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), productCtl.Get)
-		product.GET(":id/stock-histories", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), stockHistoryCtl.List)
+		product.GET("", middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff), productCtl.List)
+		product.GET(":id", middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff), productCtl.Get)
+		product.GET(":id/stock-histories", middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff), stockHistoryCtl.List)
 
 		// Admin only
 		adminProduct := product.Group("")
-		adminProduct.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
+		adminProduct.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner))
 		{
 			adminProduct.POST("", productCtl.Create)
 			adminProduct.PUT(":id", productCtl.Update)
@@ -32,6 +32,6 @@ func registerProduct(router *gin.RouterGroup) {
 
 	stockHistories := router.Group("/stock-histories")
 	{
-		stockHistories.GET("", middlewares.RoleHandler(constants.UserRoleAdmin, constants.UserRoleStaff), stockHistoryCtl.List)
+		stockHistories.GET("", middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff), stockHistoryCtl.List)
 	}
 }

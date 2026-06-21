@@ -18,7 +18,12 @@ func NewStatisticsController(statsSrv services.StatisticsService) StatisticsCont
 }
 
 func (ctl *StatisticsController) GetDashboardData(ctx *gin.Context) {
-	res, err := ctl.statsSrv.GetDashboardData(ctx)
+	timeRange := ctx.Query("range")
+	if timeRange == "" {
+		timeRange = "daily"
+	}
+
+	res, err := ctl.statsSrv.GetDashboardData(ctx, timeRange)
 	if err != nil {
 		http_response.SendError(ctx, internal_err.NewDefaultError(http.StatusInternalServerError, err.Error()))
 		return

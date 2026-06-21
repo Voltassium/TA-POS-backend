@@ -35,8 +35,11 @@ func (r *stockHistoryRepository) ListStockHistory(ctx context.Context, req reque
 		Model(&res).
 		Relation("Product")
 
-	if req.ProductID != 0 {
+	if req.ProductID != "" {
 		q.Where("stock_history.product_id = ?", req.ProductID)
+	}
+	if req.Search != "" {
+		q.Where("EXISTS (SELECT 1 FROM products p WHERE p.id = stock_history.product_id AND p.name ILIKE ?)", "%"+req.Search+"%")
 	}
 
 	q.Limit(req.PageSize).

@@ -1,8 +1,0 @@
-CREATE TABLE IF NOT EXISTS categories (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    image_url TEXT,
-    store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);

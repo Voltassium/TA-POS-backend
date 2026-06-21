@@ -22,11 +22,11 @@ import (
 type OrderService interface {
 	Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error)
 	List(ctx context.Context, payload requests.ListOrder) (dto.PaginationResponse[response.Order], error)
-	Detail(ctx context.Context, id int64) (response.OrderDetail, error)
-	UpdateStatus(ctx context.Context, id int64, payload requests.UpdateOrderStatus) error
-	Cancel(ctx context.Context, id int64) error
-	AddItem(ctx context.Context, orderID int64, payload requests.AddOrderItem) (response.OrderDetail, error)
-	RemoveItem(ctx context.Context, orderID int64, itemID int64) (response.OrderDetail, error)
+	Detail(ctx context.Context, id string) (response.OrderDetail, error)
+	UpdateStatus(ctx context.Context, id string, payload requests.UpdateOrderStatus) error
+	Cancel(ctx context.Context, id string) error
+	AddItem(ctx context.Context, orderID string, payload requests.AddOrderItem) (response.OrderDetail, error)
+	RemoveItem(ctx context.Context, orderID string, itemID string) (response.OrderDetail, error)
 }
 
 type orderService struct {
@@ -53,11 +53,11 @@ func NewOrderSrv(
 func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder) (response.OrderDetail, error) {
 	staffID := authentication.GetUserDataFromToken(ctx).UserID
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	if staffID == 0 || storeID == 0 {
+	if staffID == "" || storeID == 0 {
 		return response.OrderDetail{}, internal_err.NewDefaultError(http.StatusUnauthorized, "Invalid user or store")
 	}
 
-	var orderID int64
+	var orderID string
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		// Generate human-readable order code: YYYYMMDD-NNN
@@ -67,7 +67,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 		}
 		orderCode := fmt.Sprintf("%s-%03d", time.Now().Format("20060102"), todayCount+1)
 
-		order := domainOrderFromCreate(payload, storeID, staffID)
+		order := s.domainOrderFromCreate(payload, storeID, staffID)
 		order.OrderCode = orderCode
 		if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
 			return err
@@ -136,7 +136,7 @@ func (s *orderService) List(ctx context.Context, payload requests.ListOrder) (dt
 	return paginateRes, nil
 }
 
-func (s *orderService) Detail(ctx context.Context, id int64) (response.OrderDetail, error) {
+func (s *orderService) Detail(ctx context.Context, id string) (response.OrderDetail, error) {
 	order, err := s.orderRepo.GetOrder(ctx, id)
 	if err != nil {
 		return response.OrderDetail{}, err
@@ -145,7 +145,7 @@ func (s *orderService) Detail(ctx context.Context, id int64) (response.OrderDeta
 	return response.NewOrderDetail(order), nil
 }
 
-func (s *orderService) UpdateStatus(ctx context.Context, id int64, payload requests.UpdateOrderStatus) error {
+func (s *orderService) UpdateStatus(ctx context.Context, id string, payload requests.UpdateOrderStatus) error {
 	order, err := s.orderRepo.GetOrder(ctx, id)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (s *orderService) UpdateStatus(ctx context.Context, id int64, payload reque
 	return s.orderRepo.UpdateOrderStatus(ctx, id, payload.Status)
 }
 
-func (s *orderService) Cancel(ctx context.Context, id int64) error {
+func (s *orderService) Cancel(ctx context.Context, id string) error {
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		order, err := s.orderRepo.GetOrder(ctx, id)
 		if err != nil {
@@ -191,7 +191,7 @@ func (s *orderService) Cancel(ctx context.Context, id int64) error {
 	return err
 }
 
-func (s *orderService) AddItem(ctx context.Context, orderID int64, payload requests.AddOrderItem) (response.OrderDetail, error) {
+func (s *orderService) AddItem(ctx context.Context, orderID string, payload requests.AddOrderItem) (response.OrderDetail, error) {
 	var detail response.OrderDetail
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		order, err := s.orderRepo.GetOrder(ctx, orderID)
@@ -253,7 +253,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID int64, payload reque
 	return response.NewOrderDetail(order), nil
 }
 
-func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int64) (response.OrderDetail, error) {
+func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID string) (response.OrderDetail, error) {
 	var detail response.OrderDetail
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		order, err := s.orderRepo.GetOrder(ctx, orderID)
@@ -313,7 +313,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID int64, itemID int
 	return response.NewOrderDetail(order), nil
 }
 
-func domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID int64) domain.Order {
+func (s *orderService) domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID string) domain.Order {
 	var discountType *string
 	if payload.DiscountType != nil {
 		dt := string(*payload.DiscountType)
@@ -324,6 +324,7 @@ func domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID 
 		StoreID:       storeID,
 		TableID:       payload.TableID,
 		StaffID:       staffID,
+		CustomerName:  payload.CustomerName,
 		DiscountType:  discountType,
 		DiscountValue: payload.DiscountValue,
 		TotalAmount:   0,
@@ -331,7 +332,7 @@ func domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID 
 	}
 }
 
-func domainOrderItemFromCreate(orderID int64, unitPrice float64, payload requests.AddOrderItem) domain.OrderItem {
+func domainOrderItemFromCreate(orderID string, unitPrice float64, payload requests.AddOrderItem) domain.OrderItem {
 	baseSubtotal := unitPrice * float64(payload.Quantity)
 
 	var discountAmount float64

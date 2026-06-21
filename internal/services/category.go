@@ -13,9 +13,9 @@ import (
 
 type CategoryService interface {
 	Create(ctx context.Context, payload requests.CreateCategory) (response.Category, error)
-	Update(ctx context.Context, id int64, payload requests.UpdateCategory) error
-	Delete(ctx context.Context, id int64) error
-	Detail(ctx context.Context, id int64) (response.Category, error)
+	Update(ctx context.Context, id string, payload requests.UpdateCategory) error
+	Delete(ctx context.Context, id string) error
+	Detail(ctx context.Context, id string) (response.Category, error)
 	List(ctx context.Context, payload requests.ListCategory) (dto.PaginationResponse[response.Category], error)
 }
 
@@ -42,7 +42,7 @@ func (s *categoryService) Create(ctx context.Context, payload requests.CreateCat
 	return response.NewCategory(category), nil
 }
 
-func (s *categoryService) Update(ctx context.Context, id int64, payload requests.UpdateCategory) error {
+func (s *categoryService) Update(ctx context.Context, id string, payload requests.UpdateCategory) error {
 	category, err := s.categoryRepo.GetCategory(ctx, id)
 	if err != nil {
 		return err
@@ -51,18 +51,14 @@ func (s *categoryService) Update(ctx context.Context, id int64, payload requests
 	if payload.Name != "" {
 		category.Name = payload.Name
 	}
-	if payload.ImageURL != "" {
-		category.ImageURL = payload.ImageURL
-	}
-
 	return s.categoryRepo.UpdateCategory(ctx, &category)
 }
 
-func (s *categoryService) Delete(ctx context.Context, id int64) error {
+func (s *categoryService) Delete(ctx context.Context, id string) error {
 	return s.categoryRepo.DeleteCategory(ctx, id)
 }
 
-func (s *categoryService) Detail(ctx context.Context, id int64) (response.Category, error) {
+func (s *categoryService) Detail(ctx context.Context, id string) (response.Category, error) {
 	category, err := s.categoryRepo.GetCategory(ctx, id)
 	if err != nil {
 		return response.Category{}, err

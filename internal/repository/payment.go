@@ -8,7 +8,7 @@ import (
 
 type PaymentRepository interface {
 	CreatePayment(ctx context.Context, data *domain.Payment) error
-	GetPaymentByOrder(ctx context.Context, orderID int64) (domain.Payment, error)
+	GetPaymentByOrder(ctx context.Context, orderID string) (domain.Payment, error)
 }
 
 type paymentRepository struct {
@@ -24,7 +24,7 @@ func (r *paymentRepository) CreatePayment(ctx context.Context, data *domain.Paym
 	return err
 }
 
-func (r *paymentRepository) GetPaymentByOrder(ctx context.Context, orderID int64) (domain.Payment, error) {
+func (r *paymentRepository) GetPaymentByOrder(ctx context.Context, orderID string) (domain.Payment, error) {
 	var res domain.Payment
 	err := r.db.InitQuery(ctx).
 		NewSelect().

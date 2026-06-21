@@ -32,7 +32,7 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 		{
 			Email:    "admin@pos.com",
 			Password: hashedPassword,
-			Role:     constants.UserRoleAdmin,
+			Role:     constants.UserRoleSuperadmin,
 			StoreID:  &storeID,
 		},
 		{

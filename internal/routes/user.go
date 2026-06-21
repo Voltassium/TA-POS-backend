@@ -14,11 +14,15 @@ func registerUser(router *gin.RouterGroup) {
 
 	user := router.Group("/users")
 	{
-		user.Use(middlewares.RoleHandler(constants.UserRoleAdmin))
-		user.GET("", userCtl.ListUser)
-		user.GET("profile", userCtl.GetProfile)
-		user.GET(":id", userCtl.Get)
-		user.PUT(":id", userCtl.Update)
-		user.DELETE(":id", userCtl.Delete)
+		user.GET("profile", middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner, constants.UserRoleChef, constants.UserRoleStaff), userCtl.GetProfile)
+
+		adminUser := user.Group("")
+		adminUser.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner))
+		{
+			adminUser.GET("", userCtl.ListUser)
+			adminUser.GET(":id", userCtl.Get)
+			adminUser.PUT(":id", userCtl.Update)
+			adminUser.DELETE(":id", userCtl.Delete)
+		}
 	}
 }

@@ -7,10 +7,12 @@ import (
 )
 
 type Order struct {
-	ID             int64                 `json:"id"`
+	ID             string                `json:"id"`
 	OrderCode      string                `json:"order_code"`
+	CustomerName   *string               `json:"customer_name"`
 	TableID        *int64                `json:"table_id"`
-	StaffID        int64                 `json:"staff_id"`
+	StaffID        string                `json:"staff_id"`
+	StaffName      string                `json:"staff_name"`
 	TotalAmount    float64               `json:"total_amount"`
 	DiscountType   *string               `json:"discount_type"`
 	DiscountValue  float64               `json:"discount_value"`
@@ -27,11 +29,18 @@ type OrderDetail struct {
 }
 
 func NewOrder(order domain.Order) Order {
+	var staffName string
+	if order.Staff != nil {
+		staffName = order.Staff.Email
+	}
+
 	return Order{
 		ID:             order.ID,
 		OrderCode:      order.OrderCode,
+		CustomerName:   order.CustomerName,
 		TableID:        order.TableID,
 		StaffID:        order.StaffID,
+		StaffName:      staffName,
 		TotalAmount:    order.TotalAmount,
 		DiscountType:   order.DiscountType,
 		DiscountValue:  order.DiscountValue,

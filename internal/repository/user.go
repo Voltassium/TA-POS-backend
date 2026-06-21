@@ -14,8 +14,8 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, data *domain.User) error
 	ListUser(ctx context.Context, req requests.ListUser) ([]domain.User, int, error)
 	UpdateUser(ctx context.Context, data *domain.User) error
-	DeleteUser(ctx context.Context, id int64) error
-	GetUser(ctx context.Context, id int64) (res domain.User, err error)
+	DeleteUser(ctx context.Context, id string) error
+	GetUser(ctx context.Context, id string) (res domain.User, err error)
 	GetUserByEmail(ctx context.Context, email string) (res domain.User, err error)
 }
 
@@ -65,7 +65,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, data *domain.User) erro
 	return err
 }
 
-func (r *userRepository) DeleteUser(ctx context.Context, id int64) error {
+func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewDelete().
@@ -76,7 +76,7 @@ func (r *userRepository) DeleteUser(ctx context.Context, id int64) error {
 	return err
 }
 
-func (r *userRepository) GetUser(ctx context.Context, id int64) (res domain.User, err error) {
+func (r *userRepository) GetUser(ctx context.Context, id string) (res domain.User, err error) {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	err = r.db.InitQuery(ctx).
 		NewSelect().

@@ -11,11 +11,13 @@ import (
 type Order struct {
 	bun.BaseModel `bun:"table:orders"`
 
-	ID             int64                 `bun:"id,pk,autoincrement"`
+	ID             string                `bun:"id,pk,type:uuid,default:gen_random_uuid()"`
 	OrderCode      string                `bun:"order_code,notnull"`
 	StoreID        int64                 `bun:"store_id,notnull"`
 	TableID        *int64                `bun:"table_id"`
-	StaffID        int64                 `bun:"staff_id,notnull"`
+	CustomerName   *string               `bun:"customer_name"`
+	StaffID        string                `bun:"staff_id,type:uuid,notnull"`
+	Staff          *User                 `bun:"rel:belongs-to,join:staff_id=id"`
 	TotalAmount    float64               `bun:"total_amount,notnull,default:0"`
 	DiscountType   *string               `bun:"discount_type"`
 	DiscountValue  float64               `bun:"discount_value,notnull,default:0"`

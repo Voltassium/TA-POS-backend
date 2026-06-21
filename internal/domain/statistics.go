@@ -6,13 +6,15 @@ type SalesData struct {
 }
 
 type TopSellingProduct struct {
-	ProductID    int64   `bun:"product_id"`
+	ProductID    string  `bun:"product_id"`
 	ProductName  string  `bun:"product_name"`
 	CategoryName string  `bun:"category_name"`
 	Quantity     int     `bun:"quantity"`
 }
 
 type DashboardStats struct {
-	TotalOrders  int64   `bun:"total_orders"`
-	TotalRevenue float64 `bun:"total_revenue"`
+	TotalOrders   int64   `bun:"total_orders"`
+	TotalRevenue  float64 `bun:"total_revenue"`
+	TotalProfit   float64 `bun:"total_profit"`
+	TotalExpenses float64 `bun:"total_expenses"`
 }

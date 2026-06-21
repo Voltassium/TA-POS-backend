@@ -15,9 +15,9 @@ import (
 type OrderRepository interface {
 	CreateOrder(ctx context.Context, data *domain.Order) error
 	CountTodayOrders(ctx context.Context, storeID int64) (int, error)
-	UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error
-	UpdateOrderAmounts(ctx context.Context, id int64, total float64, discountAmount float64) error
-	GetOrder(ctx context.Context, id int64) (domain.Order, error)
+	UpdateOrderStatus(ctx context.Context, id string, status constants.OrderStatus) error
+	UpdateOrderAmounts(ctx context.Context, id string, total float64, discountAmount float64) error
+	GetOrder(ctx context.Context, id string) (domain.Order, error)
 	ListOrders(ctx context.Context, req requests.ListOrder) ([]domain.Order, int, error)
 }
 
@@ -45,7 +45,7 @@ func (r *orderRepository) CountTodayOrders(ctx context.Context, storeID int64) (
 	return count, err
 }
 
-func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id int64, status constants.OrderStatus) error {
+func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id string, status constants.OrderStatus) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
@@ -58,7 +58,7 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id int64, statu
 	return err
 }
 
-func (r *orderRepository) UpdateOrderAmounts(ctx context.Context, id int64, total float64, discountAmount float64) error {
+func (r *orderRepository) UpdateOrderAmounts(ctx context.Context, id string, total float64, discountAmount float64) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
@@ -72,7 +72,7 @@ func (r *orderRepository) UpdateOrderAmounts(ctx context.Context, id int64, tota
 	return err
 }
 
-func (r *orderRepository) GetOrder(ctx context.Context, id int64) (domain.Order, error) {
+func (r *orderRepository) GetOrder(ctx context.Context, id string) (domain.Order, error) {
 	var res domain.Order
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	err := r.db.InitQuery(ctx).
@@ -82,6 +82,7 @@ func (r *orderRepository) GetOrder(ctx context.Context, id int64) (domain.Order,
 			return query.Relation("Product")
 		}).
 		Relation("Payment").
+		Relation("Staff").
 		Where("\"order\".id = ?", id).
 		Where("\"order\".store_id = ?", storeID).
 		Scan(ctx)
@@ -94,10 +95,8 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
-		Where("store_id = ?", storeID).
-		Limit(req.PageSize).
-		Offset(req.CalculateOffset()).
-		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
+		Relation("Staff").
+		Where("store_id = ?", storeID)
 
 	if req.Status != "" {
 		q.Where("status = ?", req.Status)
@@ -105,6 +104,13 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 	if req.ExcludeStatus != "" {
 		q.Where("status != ?", req.ExcludeStatus)
 	}
+	if req.Search != "" {
+		q.Where("order_code ILIKE ?", "%"+req.Search+"%")
+	}
+
+	q.Limit(req.PageSize).
+		Offset(req.CalculateOffset()).
+		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
 
 	total, err := q.ScanAndCount(ctx)
 	return res, total, err

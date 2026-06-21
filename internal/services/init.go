@@ -19,6 +19,7 @@ type PoolService struct {
 	StockHistoryService StockHistoryService
 	StatisticsService   StatisticsService
 	KitchenService      KitchenService
+	PengeluaranService  PengeluaranService
 }
 
 func Init() {
@@ -26,7 +27,7 @@ func Init() {
 		repo := repository.RepoPool
 		ServicePool = &PoolService{
 			AuthService:         NewAuthSrv(repo.UserRepository),
-			UserService:         NewUserSrv(repo.UserRepository),
+			UserService:         NewUserSrv(repo.UserRepository, repo.StoreRepository),
 			StoreService:        NewStoreService(repo),
 			CategoryService:     NewCategorySrv(repo.CategoryRepository),
 			ProductService:      NewProductSrv(repo.ProductRepository, repo.CategoryRepository),
@@ -35,6 +36,7 @@ func Init() {
 			StockHistoryService: NewStockHistorySrv(repo.StockHistoryRepository),
 			StatisticsService:   NewStatisticsSrv(repo.StatisticsRepository),
 			KitchenService:      NewKitchenSrv(repo.OrderRepository, repo.OrderItemRepository),
+			PengeluaranService:  NewPengeluaranSrv(repo.PengeluaranRepository),
 		}
 
 	})

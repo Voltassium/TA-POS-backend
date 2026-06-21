@@ -17,7 +17,7 @@ import (
 
 type PaymentService interface {
 	Process(ctx context.Context, payload requests.CreatePayment) (response.Payment, error)
-	GetByOrder(ctx context.Context, orderID int64) (response.Payment, error)
+	GetByOrder(ctx context.Context, orderID string) (response.Payment, error)
 }
 
 type paymentService struct {
@@ -82,7 +82,7 @@ func (s *paymentService) Process(ctx context.Context, payload requests.CreatePay
 	return paymentRes, nil
 }
 
-func (s *paymentService) GetByOrder(ctx context.Context, orderID int64) (response.Payment, error) {
+func (s *paymentService) GetByOrder(ctx context.Context, orderID string) (response.Payment, error) {
 	payment, err := s.paymentRepo.GetPaymentByOrder(ctx, orderID)
 	if err != nil {
 		return response.Payment{}, err

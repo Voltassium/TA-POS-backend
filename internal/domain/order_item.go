@@ -10,9 +10,9 @@ import (
 type OrderItem struct {
 	bun.BaseModel `bun:"table:order_items"`
 
-	ID             int64    `bun:"id,pk,autoincrement"`
-	OrderID        int64    `bun:"order_id,notnull"`
-	ProductID      int64    `bun:"product_id,notnull"`
+	ID             string   `bun:"id,pk,type:uuid,default:gen_random_uuid()"`
+	OrderID        string   `bun:"order_id,type:uuid,notnull"`
+	ProductID      string   `bun:"product_id,type:uuid,notnull"`
 	Quantity       int      `bun:"quantity,notnull"`
 	UnitPrice      float64  `bun:"unit_price,notnull"`
 	DiscountType   *string  `bun:"discount_type"`

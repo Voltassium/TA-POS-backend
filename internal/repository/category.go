@@ -12,8 +12,8 @@ import (
 type CategoryRepository interface {
 	CreateCategory(ctx context.Context, data *domain.Category) error
 	UpdateCategory(ctx context.Context, data *domain.Category) error
-	DeleteCategory(ctx context.Context, id int64) error
-	GetCategory(ctx context.Context, id int64) (domain.Category, error)
+	DeleteCategory(ctx context.Context, id string) error
+	GetCategory(ctx context.Context, id string) (domain.Category, error)
 	ListCategory(ctx context.Context, req requests.ListCategory) ([]domain.Category, int, error)
 }
 
@@ -43,7 +43,7 @@ func (r *categoryRepository) UpdateCategory(ctx context.Context, data *domain.Ca
 	return err
 }
 
-func (r *categoryRepository) DeleteCategory(ctx context.Context, id int64) error {
+func (r *categoryRepository) DeleteCategory(ctx context.Context, id string) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewDelete().
@@ -54,7 +54,7 @@ func (r *categoryRepository) DeleteCategory(ctx context.Context, id int64) error
 	return err
 }
 
-func (r *categoryRepository) GetCategory(ctx context.Context, id int64) (domain.Category, error) {
+func (r *categoryRepository) GetCategory(ctx context.Context, id string) (domain.Category, error) {
 	var res domain.Category
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	err := r.db.InitQuery(ctx).
@@ -72,8 +72,13 @@ func (r *categoryRepository) ListCategory(ctx context.Context, req requests.List
 	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
-		Where("store_id = ?", storeID).
-		Limit(req.PageSize).
+		Where("store_id = ?", storeID)
+
+	if req.Search != "" {
+		q.Where("name ILIKE ?", "%"+req.Search+"%")
+	}
+
+	q.Limit(req.PageSize).
 		Offset(req.CalculateOffset()).
 		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
 

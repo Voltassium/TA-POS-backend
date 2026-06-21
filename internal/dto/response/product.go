@@ -6,9 +6,12 @@ import (
 )
 
 type Product struct {
-	ID           int64     `json:"id"`
-	CategoryID   int64     `json:"category_id"`
+	ID           string    `json:"id"`
+	CategoryID   string    `json:"category_id"`
 	CategoryName string    `json:"category_name"`
+	ProductType  string    `json:"product_type"`
+	SKU          *string   `json:"sku"`
+	HargaBeli    *float64  `json:"harga_beli"`
 	Name         string    `json:"name"`
 	Description  string    `json:"description"`
 	Price        float64   `json:"price"`
@@ -28,6 +31,9 @@ func NewProduct(product domain.Product) Product {
 		ID:           product.ID,
 		CategoryID:   product.CategoryID,
 		CategoryName: categoryName,
+		ProductType:  product.ProductType,
+		SKU:          product.SKU,
+		HargaBeli:    product.HargaBeli,
 		Name:         product.Name,
 		Description:  product.Description,
 		Price:        product.Price,

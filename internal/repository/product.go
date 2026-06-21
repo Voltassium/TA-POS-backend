@@ -14,10 +14,10 @@ import (
 type ProductRepository interface {
 	CreateProduct(ctx context.Context, data *domain.Product) error
 	UpdateProduct(ctx context.Context, data *domain.Product) error
-	DeleteProduct(ctx context.Context, id int64) error
-	GetProduct(ctx context.Context, id int64) (domain.Product, error)
+	DeleteProduct(ctx context.Context, id string) error
+	GetProduct(ctx context.Context, id string) (domain.Product, error)
 	ListProduct(ctx context.Context, req requests.ListProduct) ([]domain.Product, int, error)
-	UpdateStock(ctx context.Context, tx bun.Tx, productID int64, change int) error
+	UpdateStock(ctx context.Context, tx bun.Tx, productID string, change int) error
 }
 
 type productRepository struct {
@@ -46,7 +46,7 @@ func (r *productRepository) UpdateProduct(ctx context.Context, data *domain.Prod
 	return err
 }
 
-func (r *productRepository) DeleteProduct(ctx context.Context, id int64) error {
+func (r *productRepository) DeleteProduct(ctx context.Context, id string) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewDelete().
@@ -57,7 +57,7 @@ func (r *productRepository) DeleteProduct(ctx context.Context, id int64) error {
 	return err
 }
 
-func (r *productRepository) GetProduct(ctx context.Context, id int64) (domain.Product, error) {
+func (r *productRepository) GetProduct(ctx context.Context, id string) (domain.Product, error) {
 	var res domain.Product
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	err := r.db.InitQuery(ctx).
@@ -77,20 +77,27 @@ func (r *productRepository) ListProduct(ctx context.Context, req requests.ListPr
 		NewSelect().
 		Model(&res).
 		Relation("Category").
-		Where("product.store_id = ?", storeID).
-		Limit(req.PageSize).
-		Offset(req.CalculateOffset()).
-		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
+		Where("product.store_id = ?", storeID)
 
-	if req.CategoryID != 0 {
+	if req.CategoryID != "" {
 		q.Where("category_id = ?", req.CategoryID)
 	}
+	if req.ProductType != "" {
+		q.Where("product_type = ?", req.ProductType)
+	}
+	if req.Search != "" {
+		q.Where("product.name ILIKE ? OR product.sku ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
+	}
+
+	q.Limit(req.PageSize).
+		Offset(req.CalculateOffset()).
+		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
 
 	total, err := q.ScanAndCount(ctx)
 	return res, total, err
 }
 
-func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productID int64, change int) error {
+func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productID string, change int) error {
 	_, err := tx.NewUpdate().
 		Model((*domain.Product)(nil)).
 		Set("stock = stock + ?", change).

@@ -6,7 +6,7 @@ import (
 )
 
 type UserAuth struct {
-	UserID  int64              `json:"user_id"`
+	UserID  string             `json:"user_id"`
 	StoreID int64              `json:"store_id"`
 	Email   string             `json:"email"`
 	Role    constants.UserRole `json:"role"`

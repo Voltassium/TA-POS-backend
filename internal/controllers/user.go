@@ -57,7 +57,7 @@ func (ctl *UserController) ListUser(ctx *gin.Context) {
 func (ctl *UserController) Update(ctx *gin.Context) {
 	var vendor requests.UpdateUser
 
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -78,7 +78,7 @@ func (ctl *UserController) Update(ctx *gin.Context) {
 }
 
 func (ctl *UserController) Delete(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -94,7 +94,7 @@ func (ctl *UserController) Delete(ctx *gin.Context) {
 }
 
 func (ctl *UserController) Get(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return

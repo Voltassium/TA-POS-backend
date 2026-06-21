@@ -20,7 +20,7 @@ func NewOrderItemController(orderSrv services.OrderService) OrderItemController 
 }
 
 func (ctl *OrderItemController) AddItem(ctx *gin.Context) {
-	orderID, err := internalHTTP.BindParams[int64](ctx, "id")
+	orderID, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -42,12 +42,12 @@ func (ctl *OrderItemController) AddItem(ctx *gin.Context) {
 }
 
 func (ctl *OrderItemController) RemoveItem(ctx *gin.Context) {
-	orderID, err := internalHTTP.BindParams[int64](ctx, "id")
+	orderID, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
 	}
-	itemID, err := internalHTTP.BindParams[int64](ctx, "item_id")
+	itemID, err := internalHTTP.BindParams[string](ctx, "item_id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return

@@ -11,7 +11,7 @@ import (
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
-	ID        int64              `bun:"id,pk,autoincrement"`
+	ID        string             `bun:"id,pk,type:uuid,default:gen_random_uuid()"`
 	StoreID   *int64             `bun:"store_id"`
 	Email     string             `bun:"email,notnull,unique"`
 	Password  string             `bun:"password,notnull"`

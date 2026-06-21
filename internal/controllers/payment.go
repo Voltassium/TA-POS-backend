@@ -36,7 +36,7 @@ func (ctl *PaymentController) Create(ctx *gin.Context) {
 }
 
 func (ctl *PaymentController) GetByOrder(ctx *gin.Context) {
-	orderID, err := internalHTTP.BindParams[int64](ctx, "order_id")
+	orderID, err := internalHTTP.BindParams[string](ctx, "order_id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return

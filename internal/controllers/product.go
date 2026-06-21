@@ -52,7 +52,7 @@ func (ctl *ProductController) List(ctx *gin.Context) {
 }
 
 func (ctl *ProductController) Get(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -68,7 +68,7 @@ func (ctl *ProductController) Get(ctx *gin.Context) {
 }
 
 func (ctl *ProductController) Update(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return
@@ -89,7 +89,7 @@ func (ctl *ProductController) Update(ctx *gin.Context) {
 }
 
 func (ctl *ProductController) Delete(ctx *gin.Context) {
-	id, err := internalHTTP.BindParams[int64](ctx, "id")
+	id, err := internalHTTP.BindParams[string](ctx, "id")
 	if err != nil {
 		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
 		return

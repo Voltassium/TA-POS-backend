@@ -12,7 +12,7 @@ import (
 )
 
 type KitchenService interface {
-	UpdateItemServedQty(ctx context.Context, orderID int64, itemID int64, payload requests.UpdateServedQty) (response.OrderDetail, error)
+	UpdateItemServedQty(ctx context.Context, orderID string, itemID string, payload requests.UpdateServedQty) (response.OrderDetail, error)
 }
 
 type kitchenService struct {
@@ -30,7 +30,7 @@ func NewKitchenSrv(
 	}
 }
 
-func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID int64, itemID int64, payload requests.UpdateServedQty) (response.OrderDetail, error) {
+func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string, itemID string, payload requests.UpdateServedQty) (response.OrderDetail, error) {
 	// 1. Fetch and validate the order
 	order, err := s.orderRepo.GetOrder(ctx, orderID)
 	if err != nil {

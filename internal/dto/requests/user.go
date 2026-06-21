@@ -8,9 +8,11 @@ import (
 
 type (
 	CreateUser struct {
-		Email    string             `json:"email" binding:"required,email"`
-		Password string             `json:"password" binding:"required"`
-		Role     constants.UserRole `json:"role" binding:"omitempty,valid_enum"`
+		Email        string             `json:"email" binding:"required,email"`
+		Password     string             `json:"password" binding:"required"`
+		Role         constants.UserRole `json:"role" binding:"omitempty,valid_enum"`
+		StoreName    string             `json:"store_name" binding:"omitempty"`
+		StoreAddress string             `json:"store_address" binding:"omitempty"`
 	}
 
 	Login struct {

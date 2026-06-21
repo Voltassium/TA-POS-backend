@@ -7,6 +7,7 @@ type PaginationRequest struct {
 	PageSize int    `form:"page_size,default=10"`
 	OrderBy  string `form:"order_by,default=updated_at"`
 	OrderDir string `form:"order_dir,default=desc" binding:"oneof=desc asc"`
+	Search   string `form:"search"`
 }
 
 type PaginationResponse[T any] struct {
