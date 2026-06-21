@@ -59,6 +59,9 @@ func (r *pengeluaranRepository) List(ctx context.Context, req requests.ListPenge
 	if req.EndDate != nil && *req.EndDate != "" {
 		query.Where("tanggal <= ?", *req.EndDate)
 	}
+	if req.Search != "" {
+		query.Where("(category ILIKE ? OR description ILIKE ?)", "%"+req.Search+"%", "%"+req.Search+"%")
+	}
 
 	count, err := query.Limit(req.PageSize).Offset(req.CalculateOffset()).OrderExpr("tanggal DESC, created_at DESC").ScanAndCount(ctx)
 	return res, count, err
