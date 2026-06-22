@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -27,7 +28,18 @@ const (
 
 func InitDB(c config.Database) {
 	once.Do(func() {
-		dsn := c.URL
+		// Bulletproof bypass for Vercel / Neon
+		// Check environment variables directly first
+		dsn := os.Getenv("DATABASE_URL")
+		if dsn == "" {
+			dsn = os.Getenv("POSTGRES_URL") // Vercel often uses this
+		}
+
+		// Fallback to Viper config if OS env is empty
+		if dsn == "" {
+			dsn = c.URL
+		}
+
 		if dsn == "" {
 			dsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 				c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
