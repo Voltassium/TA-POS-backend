@@ -3,6 +3,7 @@ package config
 import "time"
 
 type Database struct {
+	URL             string        `mapstructure:"url"`
 	Host            string        `mapstructure:"host"`
 	Port            string        `mapstructure:"port"`
 	User            string        `mapstructure:"user"`

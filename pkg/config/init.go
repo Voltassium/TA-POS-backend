@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -31,6 +32,7 @@ func LoadConfig() Config {
 		viper.SetConfigType("yaml")         // optional, set if the config file is not .json, .yaml, etc.
 		viper.AddConfigPath(configFilePath) // optionally look for config in the working directory
 
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		viper.AutomaticEnv()
 
 		if err = viper.ReadInConfig(); err != nil {

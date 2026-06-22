@@ -27,8 +27,11 @@ const (
 
 func InitDB(c config.Database) {
 	once.Do(func() {
-		dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-			c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
+		dsn := c.URL
+		if dsn == "" {
+			dsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+				c.User, c.Password, c.Host, c.Port, c.Name, c.SSLMode)
+		}
 
 		sqlDB, err := sql.Open("postgres", dsn)
 		if err != nil {
