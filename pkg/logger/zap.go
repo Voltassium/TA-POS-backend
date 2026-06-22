@@ -23,6 +23,14 @@ type ZapLogger struct {
 func NewZapLogger(config config.Logger) {
 	var logger *zap.Logger
 	once.Do(func() {
+		// Provide fallback defaults if config is empty
+		if config.LogLevel == "" {
+			config.LogLevel = "info"
+		}
+		if config.Encoding == "" {
+			config.Encoding = "json"
+		}
+
 		level, err := zapcore.ParseLevel(config.LogLevel)
 		if err != nil {
 			log.Fatal("failed to parse log level: %w", err)
@@ -36,10 +44,11 @@ func NewZapLogger(config config.Logger) {
 		zapConfig.DisableStacktrace = true
 
 		logger, err = zapConfig.Build()
-		logger = logger.WithOptions(zap.AddCallerSkip(1))
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		logger = logger.WithOptions(zap.AddCallerSkip(1))
 		Log = &ZapLogger{logger: logger}
 	})
 }
