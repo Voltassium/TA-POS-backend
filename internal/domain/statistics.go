@@ -18,3 +18,10 @@ type DashboardStats struct {
 	TotalProfit   float64 `bun:"total_profit"`
 	TotalExpenses float64 `bun:"total_expenses"`
 }
+
+type FinanceChartData struct {
+	Date     string  `bun:"date"`
+	Revenue  float64 `bun:"revenue"`
+	Expenses float64 `bun:"expenses"`
+	Profit   float64 `bun:"profit"`
+}

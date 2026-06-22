@@ -19,6 +19,7 @@ func registerUser(router *gin.RouterGroup) {
 		adminUser := user.Group("")
 		adminUser.Use(middlewares.RoleHandler(constants.UserRoleSuperadmin, constants.UserRoleOwner))
 		{
+			adminUser.POST("", userCtl.CreateUserByAdmin)
 			adminUser.GET("", userCtl.ListUser)
 			adminUser.GET(":id", userCtl.Get)
 			adminUser.PUT(":id", userCtl.Update)

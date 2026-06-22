@@ -25,9 +25,6 @@ func registerOrder(router *gin.RouterGroup) {
 
 		order.POST(":id/items", orderItemCtl.AddItem)
 		order.DELETE(":id/items/:item_id", orderItemCtl.RemoveItem)
-
-		// Kitchen: update served quantity per item
 		order.PATCH(":id/items/:item_id/served", kitchenCtl.UpdateItemServedQty)
 	}
 }
-

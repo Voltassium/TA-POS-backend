@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS orders (
     discount_type VARCHAR(20) DEFAULT NULL,
     discount_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
     discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    status VARCHAR(50) NOT NULL DEFAULT 'Open',
+    status VARCHAR(50) NOT NULL DEFAULT 'New',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

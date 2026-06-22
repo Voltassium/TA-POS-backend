@@ -38,6 +38,22 @@ func (ctl *UserController) CreateUser(ctx *gin.Context) {
 	http_response.SendSuccess(ctx, http.StatusCreated, "", nil)
 }
 
+func (ctl *UserController) CreateUserByAdmin(ctx *gin.Context) {
+	var payload requests.CreateUserByAdmin
+	if err := internalHTTP.BindData(ctx, &payload); err != nil {
+		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
+		return
+	}
+
+	err := ctl.UserService.RegisterByAdmin(ctx, payload)
+	if err != nil {
+		http_response.SendError(ctx, err)
+		return
+	}
+
+	http_response.SendSuccess(ctx, http.StatusCreated, "Akun berhasil didaftarkan", nil)
+}
+
 func (ctl *UserController) ListUser(ctx *gin.Context) {
 	var users requests.ListUser
 	if err := internalHTTP.BindData(ctx, &users); err != nil {

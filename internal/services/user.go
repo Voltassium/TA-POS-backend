@@ -9,10 +9,12 @@ import (
 	"backend-ta/internal/repository"
 	"backend-ta/pkg/authentication"
 	"context"
+	"fmt"
 )
 
 type UserService interface {
 	Register(ctx context.Context, payload requests.CreateUser) error
+	RegisterByAdmin(ctx context.Context, payload requests.CreateUserByAdmin) error
 	GetList(ctx context.Context, payload requests.ListUser) (dto.PaginationResponse[response.User], error)
 	Update(ctx context.Context, id string, payload requests.UpdateUser) error
 	DeleteSrv(ctx context.Context, id string) error
@@ -49,12 +51,47 @@ func (a *userService) Register(ctx context.Context, payload requests.CreateUser)
 			Address: payload.StoreAddress,
 		}
 		if store.Name == "" {
-			store.Name = "My Store" // Default name
+			store.Name = "My Store"
 		}
 		if err := a.storeRepo.CreateStore(ctx, &store); err != nil {
 			return err
 		}
 		user.StoreID = &store.ID
+	}
+
+	return a.userRepo.CreateUser(ctx, &user)
+}
+
+func (a *userService) RegisterByAdmin(ctx context.Context, payload requests.CreateUserByAdmin) error {
+	tokenData := authentication.GetUserDataFromToken(ctx)
+
+	if tokenData.Role == constants.UserRoleOwner {
+		if payload.Role != constants.UserRoleChef && payload.Role != constants.UserRoleStaff {
+			return fmt.Errorf("role tidak valid: owner hanya dapat mendaftarkan chef atau staff")
+		}
+	} else if tokenData.Role == constants.UserRoleSuperadmin {
+		if !payload.Role.IsValidEnum() {
+			return fmt.Errorf("role tidak valid")
+		}
+	} else {
+		return fmt.Errorf("anda tidak memiliki izin untuk mendaftarkan akun")
+	}
+
+	user := payload.ToDomain()
+	hashedPassword, err := authentication.HashPassword(payload.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = hashedPassword
+
+	if payload.Role != constants.UserRoleSuperadmin {
+		storeID := tokenData.StoreID
+		if storeID == 0 {
+			storeID = 1 // Default fallback if superadmin creates owner/staff without store context
+		}
+		user.StoreID = &storeID
+	} else {
+		user.StoreID = nil
 	}
 
 	return a.userRepo.CreateUser(ctx, &user)

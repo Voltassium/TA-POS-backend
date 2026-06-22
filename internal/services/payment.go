@@ -51,7 +51,7 @@ func (s *paymentService) Process(ctx context.Context, payload requests.CreatePay
 			return err
 		}
 
-		if order.Status != constants.OrderStatusOpen {
+		if order.Status != constants.OrderStatusNew {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Payment allowed only for open orders")
 		}
 

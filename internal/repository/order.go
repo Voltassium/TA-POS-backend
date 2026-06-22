@@ -96,7 +96,7 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 		NewSelect().
 		Model(&res).
 		Relation("Staff").
-		Where("store_id = ?", storeID)
+		Where("\"order\".store_id = ?", storeID)
 
 	if req.Status != "" {
 		q.Where("status = ?", req.Status)

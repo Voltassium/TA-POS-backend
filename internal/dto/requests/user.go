@@ -15,6 +15,12 @@ type (
 		StoreAddress string             `json:"store_address" binding:"omitempty"`
 	}
 
+	CreateUserByAdmin struct {
+		Email    string             `json:"email" binding:"required,email"`
+		Password string             `json:"password" binding:"required"`
+		Role     constants.UserRole `json:"role" binding:"required,valid_enum"`
+	}
+
 	Login struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
@@ -36,6 +42,13 @@ type (
 )
 
 func (r CreateUser) ToDomain() domain.User {
+	return domain.User{
+		Email: r.Email,
+		Role:  r.Role,
+	}
+}
+
+func (r CreateUserByAdmin) ToDomain() domain.User {
 	return domain.User{
 		Email: r.Email,
 		Role:  r.Role,

@@ -27,20 +27,47 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 		log.Fatal("Failed to hash password", err)
 	}
 
-	storeID := int64(1)
-	users := []domain.User{
-		{
-			Email:    "admin@pos.com",
+	var users []domain.User
+
+	// Superadmin
+	store1 := int64(1)
+	users = append(users, domain.User{
+		Email:    "admin@pos.com",
+		Password: hashedPassword,
+		Role:     constants.UserRoleSuperadmin,
+		StoreID:  &store1,
+	})
+
+	// Seed Owner, Chef, Staff for all 4 stores
+	for i := int64(1); i <= 4; i++ {
+		currStore := i
+		var ownerEmail, chefEmail, staffEmail string
+		if i == 1 {
+			ownerEmail = "owner@pos.com"
+			chefEmail = "chef@pos.com"
+			staffEmail = "staff@pos.com"
+		} else {
+			ownerEmail = fmt.Sprintf("owner%d@pos.com", i)
+			chefEmail = fmt.Sprintf("chef%d@pos.com", i)
+			staffEmail = fmt.Sprintf("staff%d@pos.com", i)
+		}
+
+		users = append(users, domain.User{
+			Email:    ownerEmail,
 			Password: hashedPassword,
-			Role:     constants.UserRoleSuperadmin,
-			StoreID:  &storeID,
-		},
-		{
-			Email:    "staff@pos.com",
+			Role:     constants.UserRoleOwner,
+			StoreID:  &currStore,
+		}, domain.User{
+			Email:    chefEmail,
+			Password: hashedPassword,
+			Role:     constants.UserRoleChef,
+			StoreID:  &currStore,
+		}, domain.User{
+			Email:    staffEmail,
 			Password: hashedPassword,
 			Role:     constants.UserRoleStaff,
-			StoreID:  &storeID,
-		},
+			StoreID:  &currStore,
+		})
 	}
 
 	_, err = db.NewInsert().Model(&users).Exec(ctx)

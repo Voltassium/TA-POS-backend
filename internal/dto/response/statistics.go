@@ -21,18 +21,36 @@ type DashboardStats struct {
 	TotalExpenses float64 `json:"total_expenses"`
 }
 
+type FinanceChartData struct {
+	Date     string  `json:"date"`
+	Revenue  float64 `json:"revenue"`
+	Expenses float64 `json:"expenses"`
+	Profit   float64 `json:"profit"`
+}
+
 type DashboardResponse struct {
 	Stats        DashboardStats      `json:"stats"`
 	SalesChart   []SalesData         `json:"sales_chart"`
+	FinanceChart []FinanceChartData  `json:"finance_chart"`
 	TopProducts  []TopSellingProduct `json:"top_products"`
 }
 
-func NewDashboardResponse(stats domain.DashboardStats, sales []domain.SalesData, products []domain.TopSellingProduct) DashboardResponse {
+func NewDashboardResponse(stats domain.DashboardStats, sales []domain.SalesData, finance []domain.FinanceChartData, products []domain.TopSellingProduct) DashboardResponse {
 	salesData := make([]SalesData, 0)
 	for _, s := range sales {
 		salesData = append(salesData, SalesData{
 			Date:  s.Date,
 			Total: s.Total,
+		})
+	}
+
+	financeData := make([]FinanceChartData, 0)
+	for _, f := range finance {
+		financeData = append(financeData, FinanceChartData{
+			Date:     f.Date,
+			Revenue:  f.Revenue,
+			Expenses: f.Expenses,
+			Profit:   f.Profit,
 		})
 	}
 
@@ -53,7 +71,8 @@ func NewDashboardResponse(stats domain.DashboardStats, sales []domain.SalesData,
 			TotalProfit:   stats.TotalProfit,
 			TotalExpenses: stats.TotalExpenses,
 		},
-		SalesChart:  salesData,
-		TopProducts: topProducts,
+		SalesChart:   salesData,
+		FinanceChart: financeData,
+		TopProducts:  topProducts,
 	}
 }

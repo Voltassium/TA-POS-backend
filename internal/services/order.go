@@ -60,7 +60,6 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 	var orderID string
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		// Generate human-readable order code: YYYYMMDD-NNN
 		todayCount, err := s.orderRepo.CountTodayOrders(ctx, storeID)
 		if err != nil {
 			return err
@@ -151,7 +150,7 @@ func (s *orderService) UpdateStatus(ctx context.Context, id string, payload requ
 		return err
 	}
 
-	if (order.Status == constants.OrderStatusPaid && payload.Status != constants.OrderStatusReady) || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
+	if (order.Status == constants.OrderStatusPaid && payload.Status != constants.OrderStatusCompleted) || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusCompleted {
 		return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 	}
 
@@ -165,7 +164,7 @@ func (s *orderService) Cancel(ctx context.Context, id string) error {
 			return err
 		}
 
-		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusCompleted {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
@@ -199,7 +198,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 			return err
 		}
 
-		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusCompleted {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
@@ -261,7 +260,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return err
 		}
 
-		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusReady {
+		if order.Status == constants.OrderStatusPaid || order.Status == constants.OrderStatusCancelled || order.Status == constants.OrderStatusCompleted {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
@@ -328,7 +327,7 @@ func (s *orderService) domainOrderFromCreate(payload requests.CreateOrder, store
 		DiscountType:  discountType,
 		DiscountValue: payload.DiscountValue,
 		TotalAmount:   0,
-		Status:        constants.OrderStatusOpen,
+		Status:        constants.OrderStatusNew,
 	}
 }
 

@@ -19,12 +19,14 @@ func SeedCategories(ctx context.Context, db *bun.DB) error {
 		return nil
 	}
 
-	categories := []domain.Category{
-		{StoreID: 1, Name: "Kopi & Espresso"},
-		{StoreID: 1, Name: "Minuman Segar"},
-		{StoreID: 1, Name: "Makanan Utama"},
-		{StoreID: 1, Name: "Roti & Pastry"},
-		{StoreID: 1, Name: "Camilan & Dessert"},
+	var categories []domain.Category
+	for storeID := int64(1); storeID <= 4; storeID++ {
+		categories = append(categories,
+			domain.Category{StoreID: storeID, Name: "Makanan Utama"},
+			domain.Category{StoreID: storeID, Name: "Lauk Sampingan"},
+			domain.Category{StoreID: storeID, Name: "Minuman & Jus"},
+			domain.Category{StoreID: storeID, Name: "Camilan & Dessert"},
+		)
 	}
 
 	_, err = db.NewInsert().Model(&categories).Exec(ctx)

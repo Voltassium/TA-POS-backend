@@ -5,10 +5,10 @@ type OrderStatus string
 type PaymentMethod string
 
 const (
-	OrderStatusOpen      OrderStatus = "Open"
+	OrderStatusNew       OrderStatus = "New"
 	OrderStatusPaid      OrderStatus = "Paid"
 	OrderStatusCancelled OrderStatus = "Cancelled"
-	OrderStatusReady     OrderStatus = "Ready"
+	OrderStatusCompleted OrderStatus = "Completed"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 
 func (receiver OrderStatus) IsValidEnum() bool {
 	switch receiver {
-	case OrderStatusOpen, OrderStatusPaid, OrderStatusCancelled, OrderStatusReady:
+	case OrderStatusNew, OrderStatusPaid, OrderStatusCancelled, OrderStatusCompleted:
 		return true
 	default:
 		return false

@@ -31,7 +31,6 @@ func NewKitchenSrv(
 }
 
 func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string, itemID string, payload requests.UpdateServedQty) (response.OrderDetail, error) {
-	// 1. Fetch and validate the order
 	order, err := s.orderRepo.GetOrder(ctx, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err
@@ -44,7 +43,6 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 		)
 	}
 
-	// 2. Fetch and validate the item belongs to this order
 	item, err := s.orderItemRepo.GetItem(ctx, itemID)
 	if err != nil {
 		return response.OrderDetail{}, err
@@ -57,7 +55,6 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 		)
 	}
 
-	// 3. Validate served_qty bounds
 	if payload.ServedQty > item.Quantity {
 		return response.OrderDetail{}, internal_err.NewDefaultError(
 			http.StatusBadRequest,
@@ -65,12 +62,10 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 		)
 	}
 
-	// 4. Update served_qty
 	if err := s.orderItemRepo.UpdateServedQty(ctx, itemID, payload.ServedQty); err != nil {
 		return response.OrderDetail{}, err
 	}
 
-	// 5. Check if all items are now fully served → auto-complete order
 	allItems, err := s.orderItemRepo.ListItemsByOrder(ctx, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err
@@ -78,7 +73,6 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 
 	allServed := true
 	for _, it := range allItems {
-		// Use the updated value for the item we just changed
 		servedQty := it.ServedQty
 		if it.ID == itemID {
 			servedQty = payload.ServedQty
@@ -90,12 +84,11 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 	}
 
 	if allServed {
-		if err := s.orderRepo.UpdateOrderStatus(ctx, orderID, constants.OrderStatusReady); err != nil {
+		if err := s.orderRepo.UpdateOrderStatus(ctx, orderID, constants.OrderStatusCompleted); err != nil {
 			return response.OrderDetail{}, err
 		}
 	}
 
-	// 6. Return refreshed order detail
 	refreshed, err := s.orderRepo.GetOrder(ctx, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err

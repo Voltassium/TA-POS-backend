@@ -81,7 +81,6 @@ func (s *productService) Update(ctx context.Context, id string, payload requests
 	}
 	if payload.ProductType != "" {
 		product.ProductType = payload.ProductType
-		// If switching to Olahan, clear harga_beli
 		if payload.ProductType == "Olahan" {
 			product.HargaBeli = nil
 		}

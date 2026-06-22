@@ -4,6 +4,7 @@ import (
 	"backend-ta/internal/domain"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -29,47 +30,51 @@ func SeedProducts(ctx context.Context, db *bun.DB) error {
 		return fmt.Errorf("no categories found, please seed categories first")
 	}
 
-	categoryMap := make(map[string]string)
+	type catKey struct {
+		StoreID int64
+		Name    string
+	}
+	categoryMap := make(map[catKey]string)
 	for _, cat := range categories {
-		categoryMap[cat.Name] = cat.ID
+		categoryMap[catKey{StoreID: cat.StoreID, Name: cat.Name}] = cat.ID
 	}
 
 	hb := func(v float64) *float64 { return &v }
 	sp := func(v string) *string { return &v }
 
-	products := []domain.Product{
-		// Kopi & Espresso (Olahan — dibuat sendiri)
-		{StoreID: 1, CategoryID: categoryMap["Kopi & Espresso"], ProductType: "Olahan", SKU: sp("KOPI-001"), Name: "Kopi Tubruk Robusta Gayo", Price: 18000, Stock: 150, Description: "Kopi hitam tradisional tubruk menggunakan biji kopi Robusta Gayo pilihan dengan aroma kuat dan body tebal"},
-		{StoreID: 1, CategoryID: categoryMap["Kopi & Espresso"], ProductType: "Olahan", SKU: sp("KOPI-002"), Name: "Es Kopi Susu Gula Aren", Price: 22000, Stock: 200, Description: "Double shot espresso blend, susu segar, dan gula aren cair premium khas Nusantara"},
-		{StoreID: 1, CategoryID: categoryMap["Kopi & Espresso"], ProductType: "Olahan", SKU: sp("KOPI-003"), Name: "Es Kopi Susu Pandan", Price: 24000, Stock: 120, Description: "Kopi susu espresso creamy dengan sirup pandan wangi alami yang segar dan aromatik"},
-		{StoreID: 1, CategoryID: categoryMap["Kopi & Espresso"], ProductType: "Olahan", SKU: sp("KOPI-004"), Name: "Kopi Tarik Khas Aceh", Price: 20000, Stock: 90, Description: "Perpaduan kopi robusta pekat dan susu kental manis yang ditarik secara tradisional hingga berbusa tebal"},
-		{StoreID: 1, CategoryID: categoryMap["Kopi & Espresso"], ProductType: "Olahan", SKU: sp("KOPI-005"), Name: "Es Kopi Hitam Kerinci", Price: 18000, Stock: 100, Description: "Kopi saring dingin menggunakan single origin Kerinci dengan rasa asam manis alami buah"},
+	var products []domain.Product
 
-		// Minuman Segar (Olahan — dibuat sendiri)
-		{StoreID: 1, CategoryID: categoryMap["Minuman Segar"], ProductType: "Olahan", SKU: sp("SEGAR-001"), Name: "Es Cendol Durian Klasik", Price: 28000, Stock: 110, Description: "Minuman santan gurih dengan cendol pandan kenyal, gula merah sisir, dan toping daging buah durian asli"},
-		{StoreID: 1, CategoryID: categoryMap["Minuman Segar"], ProductType: "Olahan", SKU: sp("SEGAR-002"), Name: "Es Doger Spesial", Price: 25000, Stock: 85, Description: "Es serut kelapa muda merah muda dengan ketan hitam, pacar cina, roti tawar, dan siraman susu kental manis"},
-		{StoreID: 1, CategoryID: categoryMap["Minuman Segar"], ProductType: "Olahan", SKU: sp("SEGAR-003"), Name: "Es Kelapa Muda Jeruk", Price: 22000, Stock: 75, Description: "Air kelapa muda segar dengan serutan kelapa muda, perasan jeruk peras murni, dan es batu"},
-		{StoreID: 1, CategoryID: categoryMap["Minuman Segar"], ProductType: "Olahan", SKU: sp("SEGAR-004"), Name: "Es Kunyit Asam Dingin", Price: 15000, Stock: 100, Description: "Jamu kunyit asam segar tradisional yang disajikan dingin, berkhasiat menyegarkan tubuh"},
-		{StoreID: 1, CategoryID: categoryMap["Minuman Segar"], ProductType: "Olahan", SKU: sp("SEGAR-005"), Name: "Es Selasih Lemon Selera", Price: 18000, Stock: 120, Description: "Minuman perasan lemon segar dipadu biji selasih dan sirup gula tebu murni"},
+	for storeID := int64(1); storeID <= 4; storeID++ {
+		makananID := categoryMap[catKey{StoreID: storeID, Name: "Makanan Utama"}]
+		laukID := categoryMap[catKey{StoreID: storeID, Name: "Lauk Sampingan"}]
+		minumanID := categoryMap[catKey{StoreID: storeID, Name: "Minuman & Jus"}]
+		camilanID := categoryMap[catKey{StoreID: storeID, Name: "Camilan & Dessert"}]
 
-		// Makanan Utama (Olahan — dimasak sendiri)
-		{StoreID: 1, CategoryID: categoryMap["Makanan Utama"], ProductType: "Olahan", SKU: sp("MAKAN-001"), Name: "Nasi Goreng Buntut Spesial", Price: 65000, Stock: 40, Description: "Nasi goreng gurih berempah disajikan dengan potongan buntut sapi empuk, telur mata sapi, emping, dan acar"},
-		{StoreID: 1, CategoryID: categoryMap["Makanan Utama"], ProductType: "Olahan", SKU: sp("MAKAN-002"), Name: "Nasi Ayam Geprek Sambal Korek", Price: 28000, Stock: 120, Description: "Nasi putih hangat dengan dada ayam goreng tepung renyah yang dimemarkan bersama sambal korek bawang pedas mantap"},
-		{StoreID: 1, CategoryID: categoryMap["Makanan Utama"], ProductType: "Olahan", SKU: sp("MAKAN-003"), Name: "Mie Goreng Jawa Nyemek", Price: 25000, Stock: 90, Description: "Mie kuning basah ditumis dengan bumbu kemiri, kol, sawi, potongan ayam, bakso, telur, disajikan sedikit berkuah"},
-		{StoreID: 1, CategoryID: categoryMap["Makanan Utama"], ProductType: "Olahan", SKU: sp("MAKAN-004"), Name: "Sate Ayam Madura (10 Tusuk)", Price: 30000, Stock: 70, Description: "Sate daging ayam empuk dipanggang arang, disiram bumbu kacang gurih kental, kecap manis, dan irisan bawang merah"},
-		{StoreID: 1, CategoryID: categoryMap["Makanan Utama"], ProductType: "Olahan", SKU: sp("MAKAN-005"), Name: "Rendang Sapi Minang Plate", Price: 38000, Stock: 50, Description: "Nasi hangat dengan rendang daging sapi empuk bumbu hitam otentik Padang, daun singkong rebus, dan sambal ijo"},
+		products = append(products,
+			// Makanan Utama (Olahan)
+			domain.Product{StoreID: storeID, CategoryID: makananID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MAKAN-%d01", storeID)), Name: "Rendang Sapi Minang", Price: 28000, Stock: 100, Description: "Daging sapi pilihan dimasak perlahan dengan santan dan rempah otentik Minang"},
+			domain.Product{StoreID: storeID, CategoryID: makananID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MAKAN-%d02", storeID)), Name: "Ayam Pop Khas Padang", Price: 24000, Stock: 80, Description: "Ayam kampung gurih khas Minang dengan tekstur lembut, disajikan dengan sambal pop khas"},
+			domain.Product{StoreID: storeID, CategoryID: makananID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MAKAN-%d03", storeID)), Name: "Gulai Tunjang (Kikil)", Price: 30000, Stock: 60, Description: "Kikil sapi tebal nan empuk berkuah gulai kuning gurih kaya bumbu rempah"},
+			domain.Product{StoreID: storeID, CategoryID: makananID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MAKAN-%d04", storeID)), Name: "Dendeng Batokok", Price: 28000, Stock: 70, Description: "Daging sapi tipis digoreng garing yang ditumbuk kasar disajikan dengan siraman cabai merah/ijo"},
+			domain.Product{StoreID: storeID, CategoryID: makananID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MAKAN-%d05", storeID)), Name: "Nasi Rames Rendang", Price: 38000, Stock: 150, Description: "Nasi padang lengkap dengan rendang sapi, sayur nangka gulai, daun singkong, dan sambal ijo"},
 
-		// Roti & Pastry (Kulakan — dibeli dari supplier)
-		{StoreID: 1, CategoryID: categoryMap["Roti & Pastry"], ProductType: "Kulakan", HargaBeli: hb(12000), SKU: sp("ROTI-001"), Name: "Roti Bakar Bandung Cokelat Keju", Price: 22000, Stock: 65, Description: "Roti tawar tebal bakar mentega dengan isi cokelat meses melimpah dan parutan keju cheddar gurih"},
-		{StoreID: 1, CategoryID: categoryMap["Roti & Pastry"], ProductType: "Kulakan", HargaBeli: hb(10000), SKU: sp("ROTI-002"), Name: "Kue Pancong Lumer Keju", Price: 18000, Stock: 80, Description: "Kue pancong tradisional gurih kelapa parut disajikan setengah matang lumer dengan parutan keju cheddar"},
-		{StoreID: 1, CategoryID: categoryMap["Roti & Pastry"], ProductType: "Kulakan", HargaBeli: hb(11000), SKU: sp("ROTI-003"), Name: "Pisang Goreng Pasir Keju Aren", Price: 20000, Stock: 95, Description: "Pisang kepok goreng tepung roti krispi, disiram gula aren premium dan taburan keju cheddar parut"},
-		{StoreID: 1, CategoryID: categoryMap["Roti & Pastry"], ProductType: "Kulakan", HargaBeli: hb(8000), SKU: sp("ROTI-004"), Name: "Roti Bun Mentega Kopi", Price: 15000, Stock: 110, Description: "Roti manis lembut beraroma kopi mentega yang dipanggang segar dengan kulit luar krispi ala kedai kopi modern"},
+			// Lauk Sampingan (Olahan)
+			domain.Product{StoreID: storeID, CategoryID: laukID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("LAUK-%d01", storeID)), Name: "Telur Dadar Barendo", Price: 15000, Stock: 200, Description: "Telur dadar khas padang yang tebal, garing berenda di luar, dan lembut berempah di dalam"},
+			domain.Product{StoreID: storeID, CategoryID: laukID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("LAUK-%d02", storeID)), Name: "Perkedel Kentang Padang", Price: 8000, Stock: 120, Description: "Perkedel kentang padat dengan cita rasa gurih bawang goreng dan seledri segar"},
+			domain.Product{StoreID: storeID, CategoryID: laukID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("LAUK-%d03", storeID)), Name: "Daun Singkong & Sambal Ijo", Price: 5000, Stock: 150, Description: "Porsi daun singkong rebus empuk dipadu sambal ijo padang legendaris"},
+			domain.Product{StoreID: storeID, CategoryID: laukID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("LAUK-%d04", storeID)), Name: "Sayur Nangka Gulai", Price: 7000, Stock: 100, Description: "Sayur gulai nangka muda (cubadak) berkuah santan gurih meresap"},
 
-		// Camilan & Dessert (Kulakan — dibeli dari supplier)
-		{StoreID: 1, CategoryID: categoryMap["Camilan & Dessert"], ProductType: "Kulakan", HargaBeli: hb(7000), SKU: sp("MILAN-001"), Name: "Cireng Renyah Rujak Pedas", Price: 15000, Stock: 130, Description: "Camilan tepung kanji goreng renyah kenyal khas Sunda dengan cocolan bumbu rujak gula merah pedas manis"},
-		{StoreID: 1, CategoryID: categoryMap["Camilan & Dessert"], ProductType: "Kulakan", HargaBeli: hb(10000), SKU: sp("MILAN-002"), Name: "Tahu Walik Banyuwangi", Price: 18000, Stock: 80, Description: "Tahu goreng isi adonan bakso ayam gurih dibalik hingga kulit tahu krispi, disajikan dengan cabai rawit hijau"},
-		{StoreID: 1, CategoryID: categoryMap["Camilan & Dessert"], ProductType: "Kulakan", HargaBeli: hb(9000), SKU: sp("MILAN-003"), Name: "Singkong Goreng Keju Merekah", Price: 17000, Stock: 90, Description: "Singkong gurih empuk yang digoreng hingga merekah, ditaburi keju parut gurih khas kedai"},
-		{StoreID: 1, CategoryID: categoryMap["Camilan & Dessert"], ProductType: "Kulakan", HargaBeli: hb(5000), SKU: sp("MILAN-004"), Name: "Jasuke Jagung Susu Keju", Price: 12000, Stock: 100, Description: "Jagung manis pipil hangat dicampur margarin, disiram susu kental manis manis gurih, dan parutan keju melimpah"},
+			// Minuman & Jus (Olahan)
+			domain.Product{StoreID: storeID, CategoryID: minumanID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MINUM-%d01", storeID)), Name: "Teh Talua (Teh Telur)", Price: 18000, Stock: 80, Description: "Minuman kesehatan khas Minang dari campuran kuning telur bebek kocok, teh pekat, dan susu kental manis"},
+			domain.Product{StoreID: storeID, CategoryID: minumanID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MINUM-%d02", storeID)), Name: "Es Teh Manis Selera", Price: 6000, Stock: 300, Description: "Es teh manis segar pelepas dahaga setelah makan pedas"},
+			domain.Product{StoreID: storeID, CategoryID: minumanID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MINUM-%d03", storeID)), Name: "Jus Alpukat Lumer", Price: 15000, Stock: 90, Description: "Jus alpukat mentega kental disiram susu cokelat kental manis melingkar"},
+			domain.Product{StoreID: storeID, CategoryID: minumanID, ProductType: "Olahan", SKU: sp(fmt.Sprintf("MINUM-%d04", storeID)), Name: "Es Jeruk Peras Murni", Price: 10000, Stock: 100, Description: "Es jeruk segar dari perasan jeruk manis asli pilihan"},
+
+			// Camilan & Dessert (Kulakan)
+			domain.Product{StoreID: storeID, CategoryID: camilanID, ProductType: "Kulakan", HargaBeli: hb(8000), SKU: sp(fmt.Sprintf("CAMIL-%d01", storeID)), Name: "Keripik Sanjai Balado", Price: 15000, Stock: 80, Description: "Keripik singkong khas Bukittinggi dengan balutan bumbu balado basah merah pedas manis"},
+			domain.Product{StoreID: storeID, CategoryID: camilanID, ProductType: "Kulakan", HargaBeli: hb(5000), SKU: sp(fmt.Sprintf("CAMIL-%d02", storeID)), Name: "Kerupuk Kulit Jangek", Price: 10000, Stock: 120, Description: "Kerupuk kulit sapi renyah gurih khas Minang yang cocok disantap bersama kuah gulai"},
+			domain.Product{StoreID: storeID, CategoryID: camilanID, ProductType: "Kulakan", HargaBeli: hb(6000), SKU: sp(fmt.Sprintf("CAMIL-%d03", storeID)), Name: "Roti Cane Susu", Price: 12000, Stock: 50, Description: "Roti cane khas Padang disiram susu kental manis legit"},
+		)
 	}
 
 	_, err = db.NewInsert().Model(&products).Exec(ctx)
@@ -77,6 +82,30 @@ func SeedProducts(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	fmt.Println("Products seeded successfully")
+	var stockHistories []domain.StockHistory
+	febFirst := time.Date(2026, 2, 1, 8, 0, 0, 0, time.Local)
+
+	var insertedProducts []domain.Product
+	db.NewSelect().Model(&insertedProducts).Scan(ctx)
+
+	for _, p := range insertedProducts {
+		if p.Stock > 0 {
+			stockHistories = append(stockHistories, domain.StockHistory{
+				ProductID: p.ID,
+				Change:    p.Stock,
+				Reason:    "Inisialisasi Stok Awal (Seeder)",
+				CreatedAt: febFirst,
+			})
+		}
+	}
+
+	if len(stockHistories) > 0 {
+		_, err = db.NewInsert().Model(&stockHistories).Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("Products and initial StockHistory seeded successfully")
 	return nil
 }

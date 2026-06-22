@@ -46,6 +46,14 @@ func SeedAll(db *bun.DB, fresh bool) error {
 		return fmt.Errorf("error seeding products: %w", err)
 	}
 
+	if err := SeedPengeluaran(ctx, db); err != nil {
+		return fmt.Errorf("error seeding pengeluaran: %w", err)
+	}
+
+	if err := SeedOrders(ctx, db); err != nil {
+		return fmt.Errorf("error seeding orders: %w", err)
+	}
+
 	fmt.Println("Seeding completed successfully!")
 	return nil
 }

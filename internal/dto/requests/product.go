@@ -41,7 +41,6 @@ func (r CreateProduct) ToDomain() domain.Product {
 		isAvailable = *r.IsAvailable
 	}
 
-	// Only Kulakan products can have harga_beli
 	var hargaBeli *float64
 	if r.ProductType == "Kulakan" {
 		hargaBeli = r.HargaBeli

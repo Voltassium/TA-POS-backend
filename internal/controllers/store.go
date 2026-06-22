@@ -62,7 +62,6 @@ func (ctl *StoreController) List(ctx *gin.Context) {
 		return
 	}
 
-	// We return custom pagination structure
 	http_response.SendSuccess(ctx, http.StatusOK, "Stores listed successfully", map[string]interface{}{
 		"data": res,
 		"meta": map[string]interface{}{
