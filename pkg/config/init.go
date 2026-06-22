@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"sync"
 
@@ -50,6 +51,41 @@ func LoadConfig() Config {
 		if err = viper.Unmarshal(&config); err != nil {
 			err = fmt.Errorf("error unmarshaling config: %w", err)
 			return
+		}
+
+		// --- BULLETPROOF FALLBACK ---
+		// In some serverless environments, if unmarshal is finicky, we explicitly assign from OS.
+		if os.Getenv("DATABASE_URL") != "" {
+			config.Database.URL = os.Getenv("DATABASE_URL")
+		}
+		if os.Getenv("DATABASE_HOST") != "" {
+			config.Database.Host = os.Getenv("DATABASE_HOST")
+		}
+		if os.Getenv("DATABASE_PORT") != "" {
+			config.Database.Port = os.Getenv("DATABASE_PORT")
+		}
+		if os.Getenv("DATABASE_USER") != "" {
+			config.Database.User = os.Getenv("DATABASE_USER")
+		}
+		if os.Getenv("DATABASE_PASSWORD") != "" {
+			config.Database.Password = os.Getenv("DATABASE_PASSWORD")
+		}
+		if os.Getenv("DATABASE_NAME") != "" {
+			config.Database.Name = os.Getenv("DATABASE_NAME")
+		}
+		if os.Getenv("AUTHENTICATION_ACCESS_SECRET_KEY") != "" {
+			config.Authentication.AccessSecretKey = os.Getenv("AUTHENTICATION_ACCESS_SECRET_KEY")
+		}
+		if os.Getenv("AUTHENTICATION_REFRESH_SECRET_KEY") != "" {
+			config.Authentication.RefreshSecretKey = os.Getenv("AUTHENTICATION_REFRESH_SECRET_KEY")
+		}
+		
+		// Validate critical configurations
+		if config.Database.URL == "" && config.Database.Host == "" {
+			log.Println("WARNING: Database connection string and Host are both empty! The application will likely fail to connect to the database.")
+		}
+		if config.Authentication.AccessSecretKey == "" {
+			log.Println("WARNING: AUTHENTICATION_ACCESS_SECRET_KEY is empty! JWT tokens will be insecure.")
 		}
 	})
 
