@@ -1,7 +1,7 @@
-package middlewares
+﻿package middlewares
 
 import (
-	"backend-ta/internal/dto/requests"
+	"backend-ta/app/dto/requests"
 	"backend-ta/pkg/authentication"
 	internal_err "backend-ta/pkg/errors"
 	"backend-ta/pkg/http/server/http_response"

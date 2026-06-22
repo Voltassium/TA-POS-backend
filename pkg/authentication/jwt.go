@@ -1,8 +1,8 @@
-package authentication
+﻿package authentication
 
 import (
-	"backend-ta/internal/constants"
-	"backend-ta/internal/dto/requests"
+	"backend-ta/app/constants"
+	"backend-ta/app/dto/requests"
 	"backend-ta/pkg/errors"
 	"context"
 	"sync"

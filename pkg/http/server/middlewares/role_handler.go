@@ -1,7 +1,7 @@
-package middlewares
+﻿package middlewares
 
 import (
-	"backend-ta/internal/constants"
+	"backend-ta/app/constants"
 	"backend-ta/pkg/authentication"
 	"backend-ta/pkg/errors"
 	"backend-ta/pkg/http/server/http_response"

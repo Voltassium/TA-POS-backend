@@ -1,8 +1,8 @@
-package main
+﻿package main
 
 import (
-	"backend-ta/internal/database/seeders"
-	"backend-ta/internal/routes"
+	"backend-ta/app/database/seeders"
+	"backend-ta/app/routes"
 	"backend-ta/pkg/authentication"
 	"backend-ta/pkg/config"
 	"backend-ta/pkg/database"

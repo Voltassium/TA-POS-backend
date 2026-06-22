@@ -1,7 +1,7 @@
-package api
+﻿package api
 
 import (
-	"backend-ta/internal/routes"
+	"backend-ta/app/routes"
 	"backend-ta/pkg/authentication"
 	"backend-ta/pkg/config"
 	"backend-ta/pkg/database"
