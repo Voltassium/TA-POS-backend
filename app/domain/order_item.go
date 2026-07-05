@@ -15,9 +15,6 @@ type OrderItem struct {
 	ProductID      string   `bun:"product_id,type:uuid,notnull"`
 	Quantity       int      `bun:"quantity,notnull"`
 	UnitPrice      float64  `bun:"unit_price,notnull"`
-	DiscountType   *string  `bun:"discount_type"`
-	DiscountValue  float64  `bun:"discount_value,notnull,default:0"`
-	DiscountAmount float64  `bun:"discount_amount,notnull,default:0"`
 	Subtotal       float64  `bun:"subtotal,notnull"`
 	ServedQty      int      `bun:"served_qty,notnull,default:0"`
 	Product        *Product `bun:"rel:belongs-to,join:product_id=id"`

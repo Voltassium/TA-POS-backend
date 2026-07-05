@@ -1,4 +1,4 @@
-﻿package response
+package response
 
 import (
 	"backend-ta/app/constants"
@@ -14,9 +14,6 @@ type Order struct {
 	StaffID        string                `json:"staff_id"`
 	StaffName      string                `json:"staff_name"`
 	TotalAmount    float64               `json:"total_amount"`
-	DiscountType   *string               `json:"discount_type"`
-	DiscountValue  float64               `json:"discount_value"`
-	DiscountAmount float64               `json:"discount_amount"`
 	Status         constants.OrderStatus `json:"status"`
 	CreatedAt   time.Time             `json:"created_at"`
 	UpdatedAt   time.Time             `json:"updated_at"`
@@ -42,9 +39,6 @@ func NewOrder(order domain.Order) Order {
 		StaffID:        order.StaffID,
 		StaffName:      staffName,
 		TotalAmount:    order.TotalAmount,
-		DiscountType:   order.DiscountType,
-		DiscountValue:  order.DiscountValue,
-		DiscountAmount: order.DiscountAmount,
 		Status:         order.Status,
 		CreatedAt:   order.CreatedAt,
 		UpdatedAt:   order.UpdatedAt,

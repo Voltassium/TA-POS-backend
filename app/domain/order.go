@@ -1,4 +1,4 @@
-﻿package domain
+package domain
 
 import (
 	"backend-ta/app/constants"
@@ -19,9 +19,6 @@ type Order struct {
 	StaffID        string                `bun:"staff_id,type:uuid,notnull"`
 	Staff          *User                 `bun:"rel:belongs-to,join:staff_id=id"`
 	TotalAmount    float64               `bun:"total_amount,notnull,default:0"`
-	DiscountType   *string               `bun:"discount_type"`
-	DiscountValue  float64               `bun:"discount_value,notnull,default:0"`
-	DiscountAmount float64               `bun:"discount_amount,notnull,default:0"`
 	Status         constants.OrderStatus `bun:"status,notnull"`
 	OrderItems     []OrderItem           `bun:"rel:has-many,join:id=order_id"`
 	Payment        *Payment              `bun:"rel:has-one,join:id=order_id"`

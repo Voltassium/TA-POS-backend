@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/constants"
@@ -64,17 +64,16 @@ func (r *statisticsRepository) GetCogsChart(ctx context.Context, startDate, endD
 	var cogs []domain.SalesData
 
 	err := r.db.DB.NewSelect().
-		TableExpr("order_items AS oi").
-		ColumnExpr("TO_CHAR(o.created_at, ?) AS date", dateFormat).
-		ColumnExpr("COALESCE(SUM(oi.quantity * p.harga_beli), 0) AS total").
-		Join("JOIN orders o ON oi.order_id = o.id").
-		Join("JOIN products p ON oi.product_id = p.id").
-		Where("o.status = ?", constants.OrderStatusCompleted).
-		Where("o.store_id = ?", authentication.GetUserDataFromToken(ctx).StoreID).
-		Where("o.created_at >= ?", startDate).
-		Where("o.created_at <= ?", endDate).
-		Where("p.harga_beli > 0").
-		GroupExpr("TO_CHAR(o.created_at, ?)", dateFormat).
+		TableExpr("stock_histories AS sh").
+		Join("JOIN products AS p ON sh.product_id = p.id").
+		ColumnExpr("TO_CHAR(sh.created_at, ?) AS date", dateFormat).
+		ColumnExpr("COALESCE(SUM(sh.change * p.harga_beli), 0) AS total").
+		Where("p.store_id = ?", authentication.GetUserDataFromToken(ctx).StoreID).
+		Where("sh.created_at >= ?", startDate).
+		Where("sh.created_at <= ?", endDate).
+		Where("p.product_type = ?", "Kulakan").
+		Where("sh.change > 0").
+		GroupExpr("TO_CHAR(sh.created_at, ?)", dateFormat).
 		OrderExpr("date ASC").
 		Scan(ctx, &cogs)
 
@@ -135,21 +134,21 @@ func (r *statisticsRepository) GetDashboardStats(ctx context.Context, startDate,
 
 	var totalPurchaseCosts float64
 	err = r.db.DB.NewSelect().
-		TableExpr("order_items AS oi").
-		ColumnExpr("COALESCE(SUM(oi.quantity * p.harga_beli), 0)").
-		Join("JOIN orders o ON oi.order_id = o.id").
-		Join("JOIN products p ON oi.product_id = p.id").
-		Where("o.status = ?", constants.OrderStatusCompleted).
-		Where("o.store_id = ?", storeID).
-		Where("o.created_at >= ?", startDate).
-		Where("o.created_at <= ?", endDate).
-		Where("p.harga_beli > 0").
+		TableExpr("stock_histories AS sh").
+		Join("JOIN products AS p ON sh.product_id = p.id").
+		ColumnExpr("COALESCE(SUM(sh.change * p.harga_beli), 0)").
+		Where("p.store_id = ?", storeID).
+		Where("sh.created_at >= ?", startDate).
+		Where("sh.created_at <= ?", endDate).
+		Where("p.product_type = ?", "Kulakan").
+		Where("sh.change > 0").
 		Scan(ctx, &totalPurchaseCosts)
 	if err != nil {
 		return stats, err
 	}
 
-	stats.TotalProfit = stats.TotalRevenue - (totalPurchaseCosts + stats.TotalExpenses)
+	stats.TotalExpenses += totalPurchaseCosts
+	stats.TotalProfit = stats.TotalRevenue - stats.TotalExpenses
 
 	return stats, nil
 }

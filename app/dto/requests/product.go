@@ -1,4 +1,4 @@
-﻿package requests
+package requests
 
 import (
 	"backend-ta/app/domain"
@@ -11,7 +11,6 @@ type CreateProduct struct {
 	SKU         *string  `json:"sku" binding:"omitempty"`
 	HargaBeli   *float64 `json:"harga_beli" binding:"omitempty,min=0"`
 	Name        string   `json:"name" binding:"required"`
-	Description string   `json:"description" binding:"omitempty"`
 	Price       float64  `json:"price" binding:"required,gt=0"`
 	IsAvailable *bool    `json:"is_available" binding:"omitempty"`
 	Stock       int      `json:"stock" binding:"omitempty,gte=0"`
@@ -23,7 +22,6 @@ type UpdateProduct struct {
 	SKU         *string  `json:"sku" binding:"omitempty"`
 	HargaBeli   *float64 `json:"harga_beli" binding:"omitempty,min=0"`
 	Name        string   `json:"name" binding:"omitempty"`
-	Description string   `json:"description" binding:"omitempty"`
 	Price       float64  `json:"price" binding:"omitempty,gt=0"`
 	IsAvailable *bool    `json:"is_available" binding:"omitempty"`
 	Stock       *int     `json:"stock" binding:"omitempty,gte=0"`
@@ -52,7 +50,6 @@ func (r CreateProduct) ToDomain() domain.Product {
 		SKU:         r.SKU,
 		HargaBeli:   hargaBeli,
 		Name:        r.Name,
-		Description: r.Description,
 		Price:       r.Price,
 		IsAvailable: isAvailable,
 		Stock:       r.Stock,

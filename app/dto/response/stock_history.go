@@ -1,4 +1,4 @@
-﻿package response
+package response
 
 import (
 	"backend-ta/app/domain"
@@ -6,12 +6,14 @@ import (
 )
 
 type StockHistory struct {
-	ID          int64     `json:"id"`
-	ProductID   string    `json:"product_id"`
-	ProductName string    `json:"product_name"`
-	Change      int       `json:"change"`
-	Reason      string    `json:"reason"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	ProductID    string    `json:"product_id"`
+	ProductName  string    `json:"product_name"`
+	Change       int       `json:"change"`
+	InitialStock int       `json:"initial_stock"`
+	FinalStock   int       `json:"final_stock"`
+	Reason       string    `json:"reason"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func NewStockHistory(history domain.StockHistory) StockHistory {
@@ -21,12 +23,14 @@ func NewStockHistory(history domain.StockHistory) StockHistory {
 	}
 
 	return StockHistory{
-		ID:          history.ID,
-		ProductID:   history.ProductID,
-		ProductName: productName,
-		Change:      history.Change,
-		Reason:      history.Reason,
-		CreatedAt:   history.CreatedAt,
+		ID:           history.ID,
+		ProductID:    history.ProductID,
+		ProductName:  productName,
+		Change:       history.Change,
+		InitialStock: history.InitialStock,
+		FinalStock:   history.FinalStock,
+		Reason:       history.Reason,
+		CreatedAt:    history.CreatedAt,
 	}
 }
 

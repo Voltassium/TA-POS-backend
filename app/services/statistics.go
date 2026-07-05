@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/domain"
@@ -94,7 +94,7 @@ func (s *statisticsService) GetDashboardData(ctx context.Context, timeRange stri
 			financeMap[c.Date] = &domain.FinanceChartData{Date: c.Date}
 		}
 
-		financeMap[c.Date].Profit -= c.Total
+		financeMap[c.Date].Expenses += c.Total
 	}
 
 	var financeChart []domain.FinanceChartData

@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/constants"
@@ -104,8 +104,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 				}
 			}
 
-			finalTotal, discountAmount := computeOrderAmounts(totalAmount, &order)
-			if err := s.orderRepo.UpdateOrderAmounts(ctx, order.ID, finalTotal, discountAmount); err != nil {
+			if err := s.orderRepo.UpdateOrderAmount(ctx, order.ID, totalAmount); err != nil {
 				return err
 			}
 		}
@@ -233,8 +232,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 			return err
 		}
 
-		finalTotal, discountAmount := computeOrderAmounts(total, &order)
-		if err := s.orderRepo.UpdateOrderAmounts(ctx, orderID, finalTotal, discountAmount); err != nil {
+		if err := s.orderRepo.UpdateOrderAmount(ctx, orderID, total); err != nil {
 			return err
 		}
 
@@ -293,8 +291,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return err
 		}
 
-		finalTotal, discountAmount := computeOrderAmounts(total, &order)
-		if err := s.orderRepo.UpdateOrderAmounts(ctx, orderID, finalTotal, discountAmount); err != nil {
+		if err := s.orderRepo.UpdateOrderAmount(ctx, orderID, total); err != nil {
 			return err
 		}
 
@@ -313,72 +310,24 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 }
 
 func (s *orderService) domainOrderFromCreate(payload requests.CreateOrder, storeID int64, staffID string) domain.Order {
-	var discountType *string
-	if payload.DiscountType != nil {
-		dt := string(*payload.DiscountType)
-		discountType = &dt
-	}
-
 	return domain.Order{
-		StoreID:       storeID,
-		TableID:       payload.TableID,
-		StaffID:       staffID,
-		CustomerName:  payload.CustomerName,
-		DiscountType:  discountType,
-		DiscountValue: payload.DiscountValue,
-		TotalAmount:   0,
-		Status:        constants.OrderStatusNew,
+		StoreID:      storeID,
+		TableID:      payload.TableID,
+		StaffID:      staffID,
+		CustomerName: payload.CustomerName,
+		TotalAmount:  0,
+		Status:       constants.OrderStatusNew,
 	}
 }
 
 func domainOrderItemFromCreate(orderID string, unitPrice float64, payload requests.AddOrderItem) domain.OrderItem {
-	baseSubtotal := unitPrice * float64(payload.Quantity)
-
-	var discountAmount float64
-	var dtStr *string
-	if payload.DiscountType != nil {
-		dt := string(*payload.DiscountType)
-		dtStr = &dt
-		switch *payload.DiscountType {
-		case constants.DiscountTypePercentage:
-			discountAmount = baseSubtotal * (payload.DiscountValue / 100)
-		case constants.DiscountTypeFixed:
-			discountAmount = payload.DiscountValue
-		}
-	}
-
-	if discountAmount > baseSubtotal {
-		discountAmount = baseSubtotal
-	}
-
-	subtotal := baseSubtotal - discountAmount
+	subtotal := unitPrice * float64(payload.Quantity)
 
 	return domain.OrderItem{
-		OrderID:        orderID,
-		ProductID:      payload.ProductID,
-		Quantity:       payload.Quantity,
-		UnitPrice:      unitPrice,
-		DiscountType:   dtStr,
-		DiscountValue:  payload.DiscountValue,
-		DiscountAmount: discountAmount,
-		Subtotal:       subtotal,
+		OrderID:   orderID,
+		ProductID: payload.ProductID,
+		Quantity:  payload.Quantity,
+		UnitPrice: unitPrice,
+		Subtotal:  subtotal,
 	}
-}
-
-func computeOrderAmounts(total float64, order *domain.Order) (finalTotal float64, discountAmount float64) {
-	discountAmount = 0.0
-	if order.DiscountType != nil {
-		switch *order.DiscountType {
-		case string(constants.DiscountTypePercentage):
-			discountAmount = total * (order.DiscountValue / 100)
-		case string(constants.DiscountTypeFixed):
-			discountAmount = order.DiscountValue
-		}
-	}
-	if discountAmount > total {
-		discountAmount = total
-	}
-
-	finalTotal = total - discountAmount
-	return finalTotal, discountAmount
 }

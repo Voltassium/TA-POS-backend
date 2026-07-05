@@ -1,4 +1,4 @@
-﻿package seeders
+package seeders
 
 import (
 	"backend-ta/app/domain"
@@ -39,6 +39,6 @@ func SeedStores(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	fmt.Println("Stores seeded successfully")
+	fmt.Println("[SEEDER] Stores seeded successfully")
 	return nil
 }

@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/domain"
@@ -101,6 +101,7 @@ func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productI
 	_, err := tx.NewUpdate().
 		Model((*domain.Product)(nil)).
 		Set("stock = stock + ?", change).
+		Set("is_available = CASE WHEN stock + ? <= 0 THEN false WHEN stock = 0 AND ? > 0 THEN true ELSE is_available END", change, change).
 		Where("id = ?", productID).
 		Exec(ctx)
 	return err

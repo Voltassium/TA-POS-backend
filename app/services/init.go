@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/repository"
@@ -30,7 +30,7 @@ func Init() {
 			UserService:         NewUserSrv(repo.UserRepository, repo.StoreRepository),
 			StoreService:        NewStoreService(repo),
 			CategoryService:     NewCategorySrv(repo.CategoryRepository),
-			ProductService:      NewProductSrv(repo.ProductRepository, repo.CategoryRepository),
+			ProductService:      NewProductSrv(repo.ProductRepository, repo.CategoryRepository, repo.StockHistoryRepository),
 			OrderService:        NewOrderSrv(repo.OrderRepository, repo.OrderItemRepository, repo.ProductRepository, repo.StockHistoryRepository),
 			PaymentService:      NewPaymentSrv(repo.OrderRepository, repo.PaymentRepository, repo.ProductRepository, repo.StockHistoryRepository),
 			StockHistoryService: NewStockHistorySrv(repo.StockHistoryRepository),

@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/constants"
@@ -65,15 +65,16 @@ func (a *userService) Register(ctx context.Context, payload requests.CreateUser)
 func (a *userService) RegisterByAdmin(ctx context.Context, payload requests.CreateUserByAdmin) error {
 	tokenData := authentication.GetUserDataFromToken(ctx)
 
-	if tokenData.Role == constants.UserRoleOwner {
+	switch tokenData.Role {
+	case constants.UserRoleOwner:
 		if payload.Role != constants.UserRoleChef && payload.Role != constants.UserRoleStaff {
 			return fmt.Errorf("role tidak valid: owner hanya dapat mendaftarkan chef atau staff")
 		}
-	} else if tokenData.Role == constants.UserRoleSuperadmin {
+	case constants.UserRoleSuperadmin:
 		if !payload.Role.IsValidEnum() {
 			return fmt.Errorf("role tidak valid")
 		}
-	} else {
+	default:
 		return fmt.Errorf("anda tidak memiliki izin untuk mendaftarkan akun")
 	}
 

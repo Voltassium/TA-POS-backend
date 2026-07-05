@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/constants"
@@ -16,7 +16,7 @@ type OrderRepository interface {
 	CreateOrder(ctx context.Context, data *domain.Order) error
 	CountTodayOrders(ctx context.Context, storeID int64) (int, error)
 	UpdateOrderStatus(ctx context.Context, id string, status constants.OrderStatus) error
-	UpdateOrderAmounts(ctx context.Context, id string, total float64, discountAmount float64) error
+	UpdateOrderAmount(ctx context.Context, id string, total float64) error
 	GetOrder(ctx context.Context, id string) (domain.Order, error)
 	ListOrders(ctx context.Context, req requests.ListOrder) ([]domain.Order, int, error)
 }
@@ -58,13 +58,12 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id string, stat
 	return err
 }
 
-func (r *orderRepository) UpdateOrderAmounts(ctx context.Context, id string, total float64, discountAmount float64) error {
+func (r *orderRepository) UpdateOrderAmount(ctx context.Context, id string, total float64) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
 	_, err := r.db.InitQuery(ctx).
 		NewUpdate().
 		Model((*domain.Order)(nil)).
 		Set("total_amount = ?", total).
-		Set("discount_amount = ?", discountAmount).
 		Set("updated_at = NOW()").
 		Where("id = ?", id).
 		Where("store_id = ?", storeID).
@@ -105,7 +104,7 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 		q.Where("status != ?", req.ExcludeStatus)
 	}
 	if req.Search != "" {
-		q.Where("order_code ILIKE ?", "%"+req.Search+"%")
+		q.Where("(order_code ILIKE ? OR customer_name ILIKE ?)", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
 	q.Limit(req.PageSize).

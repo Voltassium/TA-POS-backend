@@ -1,4 +1,4 @@
-﻿package seeders
+package seeders
 
 import (
 	"backend-ta/app/constants"
@@ -55,7 +55,15 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 	var payments []domain.Payment
 	var stockHistories []domain.StockHistory
 
-	orderCounter := 1
+	indonesianNames := []string{
+		"Ahmad", "Budi", "Siti", "Dewi", "Andi", "Joko", "Rian", "Indra", "Agus", "Rina",
+		"Sari", "Aditya", "Hendra", "Mega", "Dian", "Putra", "Putri", "Tri", "Sri", "Wahyu",
+		"Eko", "Bambang", "Heri", "Lilis", "Yanto", "Yanti", "Rudi", "Tari", "Tono", "Wati",
+		"Doni", "Dina", "Hadi", "Gita", "Fajar", "Fitri", "Aris", "Anisa", "Roni", "Susi",
+	}
+
+	totalSteps := 480
+	stepCount := 0
 
 	for storeID := int64(1); storeID <= 4; storeID++ {
 		staff, ok := staffMap[storeID]
@@ -68,6 +76,12 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 		}
 
 		for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+			stepCount++
+			if stepCount%48 == 0 {
+				percent := (stepCount * 100) / totalSteps
+				fmt.Printf("[SEEDER] Seeding Orders: %d%% completed (%d orders generated so far)\n", percent, len(orders))
+			}
+
 			// Generate 5 to 15 orders daily per store
 			numOrders := rand.Intn(11) + 5
 
@@ -77,8 +91,7 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 				orderTime := time.Date(d.Year(), d.Month(), d.Day(), hour, minute, 0, 0, time.Local)
 
 				orderID := uuid.New().String()
-				orderCode := fmt.Sprintf("ORD-%s-%04d", orderTime.Format("060102"), orderCounter)
-				orderCounter++
+				orderCode := fmt.Sprintf("%s-%03d", orderTime.Format("20060102"), i+1)
 
 				status := constants.OrderStatusCompleted
 				if rand.Intn(100) < 10 {
@@ -103,47 +116,41 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 					}
 
 					orderItems = append(orderItems, domain.OrderItem{
-						ID:             orderItemID,
-						OrderID:        orderID,
-						ProductID:      prod.ID,
-						Quantity:       qty,
-						UnitPrice:      prod.Price,
-						DiscountAmount: 0,
-						Subtotal:       subtotal,
-						ServedQty:      servedQty,
-						CreatedAt:      orderTime,
-						UpdatedAt:      orderTime,
+						ID:        orderItemID,
+						OrderID:   orderID,
+						ProductID: prod.ID,
+						Quantity:  qty,
+						UnitPrice: prod.Price,
+						Subtotal:  subtotal,
+						ServedQty: servedQty,
+						CreatedAt: orderTime,
+						UpdatedAt: orderTime,
 					})
 
 					if status == constants.OrderStatusCompleted {
 						stockHistories = append(stockHistories, domain.StockHistory{
 							ProductID: prod.ID,
 							Change:    -qty,
-							Reason:    fmt.Sprintf("Penjualan (Order: %s)", orderCode),
+							Reason:    fmt.Sprintf("Order %s Created", orderCode),
 							CreatedAt: orderTime,
 						})
 					}
 				}
 
-				discountAmount := float64(0)
-				if rand.Intn(100) < 20 {
-					discountAmount = totalAmount * 0.1
-				}
-				finalAmount := totalAmount - discountAmount
+				finalAmount := totalAmount
 
-				customerName := fmt.Sprintf("Pelanggan %d", rand.Intn(1000))
+				customerName := indonesianNames[rand.Intn(len(indonesianNames))]
 
 				orders = append(orders, domain.Order{
-					ID:             orderID,
-					OrderCode:      orderCode,
-					StoreID:        storeID,
-					CustomerName:   &customerName,
-					StaffID:        staff.ID,
-					TotalAmount:    totalAmount,
-					DiscountAmount: discountAmount,
-					Status:         status,
-					CreatedAt:      orderTime,
-					UpdatedAt:      orderTime,
+					ID:           orderID,
+					OrderCode:    orderCode,
+					StoreID:      storeID,
+					CustomerName: &customerName,
+					StaffID:      staff.ID,
+					TotalAmount:  totalAmount,
+					Status:       status,
+					CreatedAt:    orderTime,
+					UpdatedAt:    orderTime,
 				})
 
 				if status == constants.OrderStatusCompleted {
@@ -212,6 +219,6 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	fmt.Printf("Orders seeded successfully: %d orders created\n", len(orders))
+	fmt.Printf("[SEEDER] Orders seeded successfully: %d orders created\n", len(orders))
 	return nil
 }

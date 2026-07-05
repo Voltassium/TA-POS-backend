@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/domain"
@@ -24,7 +24,20 @@ func NewStockHistoryRepository(db *database.Database) StockHistoryRepository {
 }
 
 func (r *stockHistoryRepository) CreateStockHistory(ctx context.Context, tx bun.Tx, data *domain.StockHistory) error {
-	_, err := tx.NewInsert().Model(data).Returning("id").Exec(ctx)
+	var product domain.Product
+	err := tx.NewSelect().
+		Model(&product).
+		Column("stock").
+		Where("id = ?", data.ProductID).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	data.FinalStock = product.Stock
+	data.InitialStock = product.Stock - data.Change
+
+	_, err = tx.NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
 }
 

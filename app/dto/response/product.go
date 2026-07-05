@@ -1,4 +1,4 @@
-﻿package response
+package response
 
 import (
 	"backend-ta/app/domain"
@@ -13,7 +13,6 @@ type Product struct {
 	SKU          *string   `json:"sku"`
 	HargaBeli    *float64  `json:"harga_beli"`
 	Name         string    `json:"name"`
-	Description  string    `json:"description"`
 	Price        float64   `json:"price"`
 	IsAvailable  bool      `json:"is_available"`
 	Stock        int       `json:"stock"`
@@ -35,7 +34,6 @@ func NewProduct(product domain.Product) Product {
 		SKU:          product.SKU,
 		HargaBeli:    product.HargaBeli,
 		Name:         product.Name,
-		Description:  product.Description,
 		Price:        product.Price,
 		IsAvailable:  product.IsAvailable,
 		Stock:        product.Stock,

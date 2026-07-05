@@ -1,4 +1,4 @@
-﻿package requests
+package requests
 
 import (
 	"backend-ta/app/constants"
@@ -8,8 +8,6 @@ import (
 type CreateOrder struct {
 	TableID       *int64                `json:"table_id" binding:"omitempty"`
 	CustomerName  *string               `json:"customer_name" binding:"omitempty"`
-	DiscountType  *constants.DiscountType `json:"discount_type" binding:"omitempty,valid_enum"`
-	DiscountValue float64               `json:"discount_value" binding:"omitempty,min=0"`
 	Items         []AddOrderItem        `json:"items" binding:"omitempty,dive"`
 }
 

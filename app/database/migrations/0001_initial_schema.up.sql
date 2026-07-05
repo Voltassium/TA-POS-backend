@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS products (
     sku VARCHAR(50) DEFAULT NULL,
     harga_beli NUMERIC(12, 2) DEFAULT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
     price NUMERIC(12, 2) NOT NULL,
     stock INTEGER NOT NULL DEFAULT 0,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
@@ -58,9 +57,6 @@ CREATE TABLE IF NOT EXISTS orders (
     staff_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     store_id INTEGER REFERENCES stores(id) ON DELETE CASCADE,
     total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    discount_type VARCHAR(20) DEFAULT NULL,
-    discount_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL DEFAULT 'New',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -78,9 +74,6 @@ CREATE TABLE IF NOT EXISTS order_items (
     served_qty INTEGER NOT NULL DEFAULT 0 CHECK (served_qty >= 0 AND served_qty <= quantity),
     unit_price NUMERIC(12, 2) NOT NULL,
     subtotal NUMERIC(12, 2) NOT NULL,
-    discount_type VARCHAR(20) DEFAULT NULL,
-    discount_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -103,6 +96,8 @@ CREATE TABLE IF NOT EXISTS stock_histories (
     id SERIAL PRIMARY KEY,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     change INTEGER NOT NULL,
+    initial_stock INTEGER NOT NULL DEFAULT 0,
+    final_stock INTEGER NOT NULL DEFAULT 0,
     reason VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

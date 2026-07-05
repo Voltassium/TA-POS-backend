@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/domain"
@@ -40,11 +40,17 @@ func (r *userRepository) CreateUser(ctx context.Context, data *domain.User) erro
 func (r *userRepository) ListUser(ctx context.Context, req requests.ListUser) ([]domain.User, int, error) {
 	var res []domain.User
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
+	currentUserID := authentication.GetUserDataFromToken(ctx).UserID
 	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
-		Where("store_id = ?", storeID).
-		Limit(req.PageSize).
+		Where("store_id = ?", storeID)
+
+	if currentUserID != "" {
+		q.Where("id != ?", currentUserID)
+	}
+
+	q.Limit(req.PageSize).
 		Offset(req.CalculateOffset()).
 		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
 

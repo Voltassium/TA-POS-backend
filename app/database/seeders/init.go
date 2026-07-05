@@ -1,4 +1,4 @@
-﻿package seeders
+package seeders
 
 import (
 	"backend-ta/app/domain"
@@ -12,7 +12,7 @@ func SeedAll(db *bun.DB, fresh bool) error {
 	ctx := context.Background()
 
 	if fresh {
-		fmt.Println("Fresh mode: truncating tables...")
+		fmt.Println("[SEEDER] Fresh mode: truncating tables...")
 		models := []interface{}{
 			(*domain.Product)(nil),
 			(*domain.Category)(nil),
@@ -25,10 +25,10 @@ func SeedAll(db *bun.DB, fresh bool) error {
 				return fmt.Errorf("error truncating table: %w", err)
 			}
 		}
-		fmt.Println("Tables truncated successfully")
+		fmt.Println("[SEEDER] Tables truncated successfully")
 	}
 
-	fmt.Println("Starting seeding...")
+	fmt.Println("[SEEDER] Starting seeding...")
 
 	if err := SeedStores(ctx, db); err != nil {
 		return fmt.Errorf("error seeding stores: %w", err)
@@ -54,6 +54,6 @@ func SeedAll(db *bun.DB, fresh bool) error {
 		return fmt.Errorf("error seeding orders: %w", err)
 	}
 
-	fmt.Println("Seeding completed successfully!")
+	fmt.Println("[SEEDER] Seeding completed successfully!")
 	return nil
 }

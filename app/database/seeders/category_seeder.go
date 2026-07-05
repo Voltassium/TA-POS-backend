@@ -1,4 +1,4 @@
-﻿package seeders
+package seeders
 
 import (
 	"backend-ta/app/domain"
@@ -15,7 +15,7 @@ func SeedCategories(ctx context.Context, db *bun.DB) error {
 	}
 
 	if count > 0 {
-		fmt.Println("Categories table already has data, skipping...")
+		fmt.Println("[SEEDER] Categories table already has data, skipping...")
 		return nil
 	}
 
@@ -34,6 +34,6 @@ func SeedCategories(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	fmt.Println("Categories seeded successfully")
+	fmt.Println("[SEEDER] Categories seeded successfully")
 	return nil
 }

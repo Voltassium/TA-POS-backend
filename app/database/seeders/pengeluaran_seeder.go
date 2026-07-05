@@ -1,4 +1,4 @@
-﻿package seeders
+package seeders
 
 import (
 	"backend-ta/app/constants"
@@ -18,7 +18,7 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 	}
 
 	if count > 0 {
-		fmt.Println("Pengeluaran table already has data, skipping...")
+		fmt.Println("[SEEDER] Pengeluaran table already has data, skipping...")
 		return nil
 	}
 
@@ -114,7 +114,7 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	fmt.Println("Pengeluaran seeded successfully")
+	fmt.Println("[SEEDER] Pengeluaran seeded successfully")
 	return nil
 }
 

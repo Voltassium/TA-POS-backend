@@ -17,7 +17,6 @@ type Product struct {
 	SKU         *string   `bun:"sku"`
 	HargaBeli   *float64  `bun:"harga_beli"`
 	Name        string    `bun:"name,notnull"`
-	Description string    `bun:"description"`
 	Price       float64   `bun:"price,notnull"`
 	IsAvailable bool      `bun:"is_available,notnull,default:true"`
 	Stock       int       `bun:"stock,notnull,default:0"`
