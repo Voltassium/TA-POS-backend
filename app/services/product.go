@@ -22,6 +22,7 @@ type ProductService interface {
 	Delete(ctx context.Context, id string) error
 	Detail(ctx context.Context, id string) (response.Product, error)
 	List(ctx context.Context, payload requests.ListProduct) (dto.PaginationResponse[response.Product], error)
+	Restock(ctx context.Context, id string, payload requests.RestockProduct) error
 }
 
 type productService struct {
@@ -178,3 +179,37 @@ func (s *productService) List(ctx context.Context, payload requests.ListProduct)
 	paginateRes = dto.NewPaginationResponse(payload.PaginationRequest, count, response.NewProductList(res))
 	return paginateRes, nil
 }
+
+func (s *productService) Restock(ctx context.Context, id string, payload requests.RestockProduct) error {
+	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		product, err := s.productRepo.GetProduct(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		if product.ProductType != "Kulakan" {
+			return errors.NewDefaultError(http.StatusBadRequest, "Hanya produk tipe Kulakan yang dapat direstock")
+		}
+
+		product.HargaBeli = &payload.HargaBeli
+		product.Stock += payload.JumlahStok
+		product.IsAvailable = true
+
+		if err := s.productRepo.UpdateProduct(ctx, &product); err != nil {
+			return err
+		}
+
+		history := domain.StockHistory{
+			ProductID: product.ID,
+			Change:    payload.JumlahStok,
+			Reason:    "Pembelian Stok (Kulakan)",
+		}
+		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
+}
+

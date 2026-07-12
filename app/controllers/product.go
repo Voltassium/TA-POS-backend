@@ -1,4 +1,4 @@
-﻿package controllers
+package controllers
 
 import (
 	"backend-ta/app/dto/requests"
@@ -102,3 +102,25 @@ func (ctl *ProductController) Delete(ctx *gin.Context) {
 
 	http_response.SendSuccess(ctx, http.StatusOK, "", nil)
 }
+
+func (ctl *ProductController) Restock(ctx *gin.Context) {
+	id, err := internalHTTP.BindParams[string](ctx, "id")
+	if err != nil {
+		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
+		return
+	}
+
+	var payload requests.RestockProduct
+	if err := internalHTTP.BindData(ctx, &payload); err != nil {
+		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
+		return
+	}
+
+	if err := ctl.productService.Restock(ctx, id, payload); err != nil {
+		http_response.SendError(ctx, err)
+		return
+	}
+
+	http_response.SendSuccess(ctx, http.StatusOK, "Berhasil melakukan kulakan stok", nil)
+}
+

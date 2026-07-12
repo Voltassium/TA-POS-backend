@@ -1,4 +1,4 @@
-﻿package routes
+package routes
 
 import (
 	"backend-ta/app/constants"
@@ -27,6 +27,7 @@ func registerProduct(router *gin.RouterGroup) {
 			adminProduct.POST("", productCtl.Create)
 			adminProduct.PUT(":id", productCtl.Update)
 			adminProduct.DELETE(":id", productCtl.Delete)
+			adminProduct.POST(":id/restock", productCtl.Restock)
 		}
 	}
 

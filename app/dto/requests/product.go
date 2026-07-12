@@ -55,3 +55,9 @@ func (r CreateProduct) ToDomain() domain.Product {
 		Stock:       r.Stock,
 	}
 }
+
+type RestockProduct struct {
+	HargaBeli  float64 `json:"harga_beli" binding:"required,gt=0"`
+	JumlahStok int     `json:"jumlah_stok" binding:"required,gt=0"`
+}
+
