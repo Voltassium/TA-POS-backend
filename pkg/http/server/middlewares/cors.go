@@ -9,6 +9,7 @@ func HandleCors() gin.HandlerFunc {
 			"http://localhost:5173":      true,
 			"http://localhost:4173":      true,
 			"https://selipos.vercel.app": true,
+			"https://ta-pos-frontend-fcbc4pdu6-dimas-premonos-projects.vercel.app": true,
 		}
 
 		if allowedOrigins[origin] {

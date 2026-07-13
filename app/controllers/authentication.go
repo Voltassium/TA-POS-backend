@@ -35,8 +35,10 @@ func (ctl *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", false, true)
-	ctx.SetCookie("refresh_token", res.RefreshToken, 604800, "/", "", false, true)
+	ctx.SetSameSite(http.SameSiteNoneMode)
+
+	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", true, true)
+	ctx.SetCookie("refresh_token", res.RefreshToken, 604800, "/", "", true, true)
 
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthLoginSuccess, res)
 }
@@ -48,8 +50,10 @@ func (ctl *AuthController) Logout(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", "", -1, "/", "", false, true)
-	ctx.SetCookie("refresh_token", "", -1, "/", "", false, true)
+	ctx.SetSameSite(http.SameSiteNoneMode)
+
+	ctx.SetCookie("access_token", "", -1, "/", "", true, true)
+	ctx.SetCookie("refresh_token", "", -1, "/", "", true, true)
 
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthLogoutSuccess, nil)
 }
@@ -69,7 +73,9 @@ func (ctl *AuthController) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", false, true)
+	ctx.SetSameSite(http.SameSiteNoneMode)
+
+	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", true, true)
 
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthRefreshTokenSuccess, res)
 }
