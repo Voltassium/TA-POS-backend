@@ -1,6 +1,7 @@
 package services
 
 import (
+	"backend-ta/app/constants"
 	"backend-ta/app/domain"
 	"backend-ta/app/dto"
 	"backend-ta/app/dto/requests"
@@ -66,9 +67,10 @@ func (s *productService) Create(ctx context.Context, payload requests.CreateProd
 
 		if product.Stock > 0 {
 			history := domain.StockHistory{
-				ProductID: product.ID,
-				Change:    product.Stock,
-				Reason:    "Stok Awal Produk Baru",
+				ProductID:  product.ID,
+				Change:     product.Stock,
+				Reason:     "Stok Awal Produk Baru",
+				SourceType: constants.StockSourcePurchase, // stok awal dianggap pembelian
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -143,9 +145,10 @@ func (s *productService) Update(ctx context.Context, id string, payload requests
 
 		if stockChange != 0 {
 			history := domain.StockHistory{
-				ProductID: product.ID,
-				Change:    stockChange,
-				Reason:    "Penyesuaian Stok (Manual)",
+				ProductID:  product.ID,
+				Change:     stockChange,
+				Reason:     "Penyesuaian Stok (Manual)",
+				SourceType: constants.StockSourceManual, // penyesuaian manual, bukan pembelian
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -200,9 +203,10 @@ func (s *productService) Restock(ctx context.Context, id string, payload request
 		}
 
 		history := domain.StockHistory{
-			ProductID: product.ID,
-			Change:    payload.JumlahStok,
-			Reason:    "Pembelian Stok (Kulakan)",
+			ProductID:  product.ID,
+			Change:     payload.JumlahStok,
+			Reason:     "Pembelian Stok (Kulakan)",
+			SourceType: constants.StockSourcePurchase, // B: restock kulakan = pembelian = dihitung sebagai COGS
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err

@@ -45,5 +45,8 @@ func NewPaginationResponse[T any](req PaginationRequest, totalItems int, data []
 }
 
 func (p PaginationRequest) CalculateOffset() int {
+	if p.Page < 1 {
+		return 0
+	}
 	return (p.Page - 1) * p.PageSize
 }

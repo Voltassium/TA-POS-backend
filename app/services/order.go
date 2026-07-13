@@ -76,7 +76,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 		if len(payload.Items) > 0 {
 			var totalAmount float64
 			for _, item := range payload.Items {
-				product, err := s.productRepo.GetProduct(ctx, item.ProductID)
+				product, err := s.productRepo.GetProductForUpdate(ctx, tx, item.ProductID)
 				if err != nil {
 					return err
 				}
@@ -95,9 +95,10 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 					return err
 				}
 				history := domain.StockHistory{
-					ProductID: item.ProductID,
-					Change:    -item.Quantity,
-					Reason:    fmt.Sprintf("Order %s Created", order.OrderCode),
+					ProductID:  item.ProductID,
+					Change:     -item.Quantity,
+					Reason:     fmt.Sprintf("Order %s Created", order.OrderCode),
+					SourceType: constants.StockSourceSale,
 				}
 				if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 					return err
@@ -176,9 +177,10 @@ func (s *orderService) Cancel(ctx context.Context, id string) error {
 				return err
 			}
 			history := domain.StockHistory{
-				ProductID: item.ProductID,
-				Change:    item.Quantity,
-				Reason:    fmt.Sprintf("Order %s Cancelled", order.OrderCode),
+				ProductID:  item.ProductID,
+				Change:     item.Quantity,
+				Reason:     fmt.Sprintf("Order %s Cancelled", order.OrderCode),
+				SourceType: constants.StockSourceReturn,
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -201,7 +203,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
-		product, err := s.productRepo.GetProduct(ctx, payload.ProductID)
+		product, err := s.productRepo.GetProductForUpdate(ctx, tx, payload.ProductID)
 		if err != nil {
 			return err
 		}
@@ -219,9 +221,10 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 			return err
 		}
 		history := domain.StockHistory{
-			ProductID: payload.ProductID,
-			Change:    -payload.Quantity,
-			Reason:    fmt.Sprintf("Item added to Order %s", order.OrderCode),
+			ProductID:  payload.ProductID,
+			Change:     -payload.Quantity,
+			Reason:     fmt.Sprintf("Item added to Order %s", order.OrderCode),
+			SourceType: constants.StockSourceSale,
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err
@@ -278,9 +281,10 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return err
 		}
 		history := domain.StockHistory{
-			ProductID: item.ProductID,
-			Change:    item.Quantity,
-			Reason:    fmt.Sprintf("Item removed from Order %s", order.OrderCode),
+			ProductID:  item.ProductID,
+			Change:     item.Quantity,
+			Reason:     fmt.Sprintf("Item removed from Order %s", order.OrderCode),
+			SourceType: constants.StockSourceReturn,
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err

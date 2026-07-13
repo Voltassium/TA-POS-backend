@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS products (
     harga_beli NUMERIC(12, 2) DEFAULT NULL,
     name VARCHAR(255) NOT NULL,
     price NUMERIC(12, 2) NOT NULL,
-    stock INTEGER NOT NULL DEFAULT 0,
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -99,11 +99,20 @@ CREATE TABLE IF NOT EXISTS stock_histories (
     initial_stock INTEGER NOT NULL DEFAULT 0,
     final_stock INTEGER NOT NULL DEFAULT 0,
     reason VARCHAR(255) NOT NULL,
+    -- source_type membedakan jenis perubahan stok:
+    -- 'purchase' = restock kulakan (dihitung sebagai COGS)
+    -- 'sale'     = pengurangan stok karena penjualan
+    -- 'return'   = penambahan stok kembali akibat pembatalan order (BUKAN pengeluaran)
+    -- 'manual'   = penyesuaian manual / stok awal
+    source_type VARCHAR(50) NOT NULL DEFAULT 'manual'
+                CHECK (source_type IN ('purchase', 'sale', 'return', 'manual')),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index for fetching stock history
+-- Index for fetching stock history by product
 CREATE INDEX IF NOT EXISTS idx_stock_histories_product_id ON stock_histories(product_id);
+-- Index for COGS query on statistics (filter by source_type)
+CREATE INDEX IF NOT EXISTS idx_stock_histories_source_type ON stock_histories(source_type, created_at);
 
 CREATE TABLE IF NOT EXISTS pengeluaran (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

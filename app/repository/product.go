@@ -16,6 +16,7 @@ type ProductRepository interface {
 	UpdateProduct(ctx context.Context, data *domain.Product) error
 	DeleteProduct(ctx context.Context, id string) error
 	GetProduct(ctx context.Context, id string) (domain.Product, error)
+	GetProductForUpdate(ctx context.Context, tx bun.Tx, id string) (domain.Product, error)
 	ListProduct(ctx context.Context, req requests.ListProduct) ([]domain.Product, int, error)
 	UpdateStock(ctx context.Context, tx bun.Tx, productID string, change int) error
 }
@@ -70,6 +71,18 @@ func (r *productRepository) GetProduct(ctx context.Context, id string) (domain.P
 	return res, err
 }
 
+func (r *productRepository) GetProductForUpdate(ctx context.Context, tx bun.Tx, id string) (domain.Product, error) {
+	var res domain.Product
+	err := tx.NewRaw(
+		`SELECT p.*, c.id AS "category__id", c.name AS "category__name", c.store_id AS "category__store_id"
+		 FROM products AS p
+		 LEFT JOIN categories AS c ON c.id = p.category_id
+		 WHERE p.id = ?
+		 FOR UPDATE`, id,
+	).Scan(ctx, &res)
+	return res, err
+}
+
 func (r *productRepository) ListProduct(ctx context.Context, req requests.ListProduct) ([]domain.Product, int, error) {
 	var res []domain.Product
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
@@ -106,4 +119,3 @@ func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productI
 		Exec(ctx)
 	return err
 }
-

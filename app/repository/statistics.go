@@ -72,7 +72,7 @@ func (r *statisticsRepository) GetCogsChart(ctx context.Context, startDate, endD
 		Where("sh.created_at >= ?", startDate).
 		Where("sh.created_at <= ?", endDate).
 		Where("p.product_type = ?", "Kulakan").
-		Where("sh.change > 0").
+		Where("sh.source_type = ?", "purchase").
 		GroupExpr("TO_CHAR(sh.created_at, ?)", dateFormat).
 		OrderExpr("date ASC").
 		Scan(ctx, &cogs)
@@ -141,7 +141,7 @@ func (r *statisticsRepository) GetDashboardStats(ctx context.Context, startDate,
 		Where("sh.created_at >= ?", startDate).
 		Where("sh.created_at <= ?", endDate).
 		Where("p.product_type = ?", "Kulakan").
-		Where("sh.change > 0").
+		Where("sh.source_type = ?", "purchase").
 		Scan(ctx, &totalPurchaseCosts)
 	if err != nil {
 		return stats, err
