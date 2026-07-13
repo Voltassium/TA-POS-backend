@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/constants"
@@ -53,6 +53,7 @@ func (a *authService) Login(ctx context.Context, payload requests.Login) (res re
 	return response.LoginResponse{
 		AccessToken:  pair.AccessToken,
 		RefreshToken: pair.RefreshToken,
+		Role:         string(user.Role),
 	}, nil
 }
 

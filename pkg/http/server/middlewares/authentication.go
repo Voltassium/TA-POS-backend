@@ -1,4 +1,4 @@
-﻿package middlewares
+package middlewares
 
 import (
 	"backend-ta/app/dto/requests"
@@ -12,15 +12,16 @@ import (
 
 func TokenAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			http_response.SendError(c, internal_err.AuthError(authentication.AuthErrMalformedToken.Error()))
-			return
+		tokenString, err := c.Cookie("access_token")
+		if err != nil || tokenString == "" {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader != "" {
+				tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			}
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			http_response.SendError(c, internal_err.AuthError(authentication.AuthErrInvalidToken.Error()))
+		if tokenString == "" {
+			http_response.SendError(c, internal_err.AuthError(authentication.AuthErrMalformedToken.Error()))
 			return
 		}
 

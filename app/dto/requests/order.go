@@ -19,4 +19,6 @@ type ListOrder struct {
 	dto.PaginationRequest
 	Status        constants.OrderStatus `form:"status" binding:"omitempty,valid_enum"`
 	ExcludeStatus constants.OrderStatus `form:"exclude_status" binding:"omitempty,valid_enum"`
+	StartDate     *string               `form:"start_date" binding:"omitempty,datetime=2006-01-02"`
+	EndDate       *string               `form:"end_date" binding:"omitempty,datetime=2006-01-02"`
 }

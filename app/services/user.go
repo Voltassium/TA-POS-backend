@@ -8,8 +8,9 @@ import (
 	"backend-ta/app/dto/response"
 	"backend-ta/app/repository"
 	"backend-ta/pkg/authentication"
+	"backend-ta/pkg/errors"
 	"context"
-	"fmt"
+	"net/http"
 )
 
 type UserService interface {
@@ -67,15 +68,15 @@ func (a *userService) RegisterByAdmin(ctx context.Context, payload requests.Crea
 
 	switch tokenData.Role {
 	case constants.UserRoleOwner:
-		if payload.Role != constants.UserRoleChef && payload.Role != constants.UserRoleStaff {
-			return fmt.Errorf("role tidak valid: owner hanya dapat mendaftarkan chef atau staff")
+		if payload.Role != constants.UserRoleChef && payload.Role != constants.UserRoleStaff && payload.Role != constants.UserRoleSuperadmin {
+			return errors.NewDefaultError(http.StatusBadRequest, "role tidak valid: owner hanya dapat mendaftarkan chef, staff, atau superadmin")
 		}
 	case constants.UserRoleSuperadmin:
 		if !payload.Role.IsValidEnum() {
-			return fmt.Errorf("role tidak valid")
+			return errors.NewDefaultError(http.StatusBadRequest, "role tidak valid")
 		}
 	default:
-		return fmt.Errorf("anda tidak memiliki izin untuk mendaftarkan akun")
+		return errors.NewDefaultError(http.StatusForbidden, "anda tidak memiliki izin untuk mendaftarkan akun")
 	}
 
 	user := payload.ToDomain()
@@ -85,14 +86,16 @@ func (a *userService) RegisterByAdmin(ctx context.Context, payload requests.Crea
 	}
 	user.Password = hashedPassword
 
-	if payload.Role != constants.UserRoleSuperadmin {
-		storeID := tokenData.StoreID
-		if storeID == 0 {
-			storeID = 1 // Default fallback if superadmin creates owner/staff without store context
+	storeID := tokenData.StoreID
+	if storeID == 0 {
+		if payload.Role == constants.UserRoleSuperadmin {
+			user.StoreID = nil
+		} else {
+			storeID = 1
+			user.StoreID = &storeID
 		}
-		user.StoreID = &storeID
 	} else {
-		user.StoreID = nil
+		user.StoreID = &storeID
 	}
 
 	return a.userRepo.CreateUser(ctx, &user)
@@ -126,6 +129,21 @@ func (a *userService) Update(ctx context.Context, id string, payload requests.Up
 		userData.Password = hashedPassword
 	}
 	if payload.Role != "" {
+		tokenData := authentication.GetUserDataFromToken(ctx)
+
+		switch tokenData.Role {
+		case constants.UserRoleOwner:
+			if payload.Role != constants.UserRoleChef && payload.Role != constants.UserRoleStaff {
+				return errors.NewDefaultError(http.StatusForbidden, "owner tidak dapat mengubah role akun menjadi owner atau superadmin")
+			}
+		case constants.UserRoleSuperadmin:
+			if !payload.Role.IsValidEnum() {
+				return errors.NewDefaultError(http.StatusBadRequest, "role tidak valid")
+			}
+		default:
+			return errors.NewDefaultError(http.StatusForbidden, "anda tidak memiliki izin untuk mengubah role")
+		}
+		
 		userData.Role = payload.Role
 	}
 

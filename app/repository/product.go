@@ -71,8 +71,6 @@ func (r *productRepository) GetProduct(ctx context.Context, id string) (domain.P
 	return res, err
 }
 
-// GetProductForUpdate melakukan SELECT ... FOR UPDATE di dalam transaksi aktif
-// untuk mencegah race condition saat dua kasir memproses produk yang sama secara bersamaan.
 func (r *productRepository) GetProductForUpdate(ctx context.Context, db bun.IDB, id string) (domain.Product, error) {
 	var res domain.Product
 	err := db.NewRaw(
@@ -80,7 +78,7 @@ func (r *productRepository) GetProductForUpdate(ctx context.Context, db bun.IDB,
 		 FROM products AS p
 		 LEFT JOIN categories AS c ON c.id = p.category_id
 		 WHERE p.id = ?
-		 FOR UPDATE`, id,
+		 FOR UPDATE OF p`, id,
 	).Scan(ctx, &res)
 	return res, err
 }

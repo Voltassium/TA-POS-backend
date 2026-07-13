@@ -20,7 +20,7 @@ func SeedCategories(ctx context.Context, db *bun.DB) error {
 	}
 
 	var categories []domain.Category
-	for storeID := int64(1); storeID <= 4; storeID++ {
+	for storeID := int64(1); storeID <= 1; storeID++ {
 		categories = append(categories,
 			domain.Category{StoreID: storeID, Name: "Makanan Utama"},
 			domain.Category{StoreID: storeID, Name: "Lauk Sampingan"},

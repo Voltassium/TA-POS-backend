@@ -5,10 +5,14 @@ import "github.com/gin-gonic/gin"
 func HandleCors() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		if origin != "" {
+		allowedOrigins := map[string]bool{
+			"http://localhost:5173":      true,
+			"http://localhost:4173":      true,
+			"https://selipos.vercel.app": true,
+		}
+
+		if allowedOrigins[origin] {
 			c.Header("Access-Control-Allow-Origin", origin)
-		} else {
-			c.Header("Access-Control-Allow-Origin", "*")
 		}
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Headers", "Authorization, Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Content-Length, Access-Control-Request-Method, Access-Control-Request-Headers, ngrok-skip-browser-warning")

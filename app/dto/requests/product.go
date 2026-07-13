@@ -11,7 +11,7 @@ type CreateProduct struct {
 	SKU         *string  `json:"sku" binding:"omitempty"`
 	HargaBeli   *float64 `json:"harga_beli" binding:"omitempty,min=0"`
 	Name        string   `json:"name" binding:"required"`
-	Price       float64  `json:"price" binding:"required,gt=0"`
+	Price       float64  `json:"price" binding:"omitempty,gte=0"`
 	IsAvailable *bool    `json:"is_available" binding:"omitempty"`
 	Stock       int      `json:"stock" binding:"omitempty,gte=0"`
 }

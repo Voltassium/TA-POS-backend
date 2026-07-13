@@ -37,7 +37,7 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 		StoreID:  &store1,
 	})
 
-	for i := int64(1); i <= 4; i++ {
+	for i := int64(1); i <= 1; i++ {
 		currStore := i
 		var ownerEmail, chefEmail, staffEmail string
 		if i == 1 {

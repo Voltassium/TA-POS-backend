@@ -62,10 +62,10 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 		"Doni", "Dina", "Hadi", "Gita", "Fajar", "Fitri", "Aris", "Anisa", "Roni", "Susi",
 	}
 
-	totalSteps := 480
+	totalSteps := 120
 	stepCount := 0
 
-	for storeID := int64(1); storeID <= 4; storeID++ {
+	for storeID := int64(1); storeID <= 1; storeID++ {
 		staff, ok := staffMap[storeID]
 		if !ok {
 			continue

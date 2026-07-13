@@ -43,8 +43,10 @@ func (r *userRepository) ListUser(ctx context.Context, req requests.ListUser) ([
 	currentUserID := authentication.GetUserDataFromToken(ctx).UserID
 	q := r.db.InitQuery(ctx).
 		NewSelect().
-		Model(&res).
-		Where("store_id = ?", storeID)
+		Model(&res)
+	if storeID > 0 {
+		q.Where("store_id = ?", storeID)
+	}
 
 	if currentUserID != "" {
 		q.Where("id != ?", currentUserID)
@@ -60,36 +62,43 @@ func (r *userRepository) ListUser(ctx context.Context, req requests.ListUser) ([
 
 func (r *userRepository) UpdateUser(ctx context.Context, data *domain.User) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	_, err := r.db.InitQuery(ctx).
+	q := r.db.InitQuery(ctx).
 		NewUpdate().
 		Model(data).
 		Where("id = ?", data.ID).
-		Where("store_id = ?", storeID).
 		ExcludeColumn("created_at").
-		Returning("id").
-		Exec(ctx)
+		Returning("id")
+	if storeID > 0 {
+		q.Where("store_id = ?", storeID)
+	}
+	_, err := q.Exec(ctx)
 	return err
 }
 
 func (r *userRepository) DeleteUser(ctx context.Context, id string) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	_, err := r.db.InitQuery(ctx).
+	q := r.db.InitQuery(ctx).
 		NewDelete().
 		Model((*domain.User)(nil)).
-		Where("id = ?", id).
-		Where("store_id = ?", storeID).
-		Exec(ctx)
+		Where("id = ?", id)
+	if storeID > 0 {
+		q.Where("store_id = ?", storeID)
+	}
+	_, err := q.Exec(ctx)
 	return err
 }
 
 func (r *userRepository) GetUser(ctx context.Context, id string) (res domain.User, err error) {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	err = r.db.InitQuery(ctx).
+	q := r.db.InitQuery(ctx).
 		NewSelect().
 		Model(&res).
-		Where("id = ?", id).
-		Where("store_id = ?", storeID).
-		Scan(ctx)
+		Relation("Store").
+		Where("id = ?", id)
+	if storeID > 0 {
+		q.Where("store_id = ?", storeID)
+	}
+	err = q.Scan(ctx)
 	return res, err
 }
 

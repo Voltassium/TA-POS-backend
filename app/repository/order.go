@@ -102,6 +102,12 @@ func (r *orderRepository) ListOrders(ctx context.Context, req requests.ListOrder
 	if req.Search != "" {
 		q.Where("(order_code ILIKE ? OR customer_name ILIKE ?)", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
+	if req.StartDate != nil && *req.StartDate != "" {
+		q.Where("\"order\".created_at >= ?", *req.StartDate)
+	}
+	if req.EndDate != nil && *req.EndDate != "" {
+		q.Where("\"order\".created_at <= ?::date + interval '1 day'", *req.EndDate)
+	}
 
 	q.Limit(req.PageSize).
 		Offset(req.CalculateOffset()).

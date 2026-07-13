@@ -44,7 +44,7 @@ func SeedProducts(ctx context.Context, db *bun.DB) error {
 
 	var products []domain.Product
 
-	for storeID := int64(1); storeID <= 4; storeID++ {
+	for storeID := int64(1); storeID <= 1; storeID++ {
 		makananID := categoryMap[catKey{StoreID: storeID, Name: "Makanan Utama"}]
 		laukID := categoryMap[catKey{StoreID: storeID, Name: "Lauk Sampingan"}]
 		minumanID := categoryMap[catKey{StoreID: storeID, Name: "Minuman & Jus"}]

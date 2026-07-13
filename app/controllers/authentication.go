@@ -1,4 +1,4 @@
-﻿package controllers
+package controllers
 
 import (
 	"backend-ta/app/constants"
@@ -35,6 +35,9 @@ func (ctl *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", false, true)
+	ctx.SetCookie("refresh_token", res.RefreshToken, 604800, "/", "", false, true)
+
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthLoginSuccess, res)
 }
 
@@ -45,21 +48,28 @@ func (ctl *AuthController) Logout(ctx *gin.Context) {
 		return
 	}
 
+	ctx.SetCookie("access_token", "", -1, "/", "", false, true)
+	ctx.SetCookie("refresh_token", "", -1, "/", "", false, true)
+
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthLogoutSuccess, nil)
 }
 
 func (ctl *AuthController) RefreshToken(ctx *gin.Context) {
-	var auth requests.RefreshToken
-	if err := internalHTTP.BindData(ctx, &auth); err != nil {
-		http_response.SendError(ctx, errors.ValidationErrorToAppError(err))
+	token, err := ctx.Cookie("refresh_token")
+	if err != nil || token == "" {
+		http_response.SendError(ctx, errors.AuthError("missing refresh token"))
 		return
 	}
+
+	auth := requests.RefreshToken{RefreshToken: token}
 
 	res, err := ctl.authService.RefreshToken(ctx, auth)
 	if err != nil {
 		http_response.SendError(ctx, err)
 		return
 	}
+
+	ctx.SetCookie("access_token", res.AccessToken, 86400, "/", "", false, true)
 
 	http_response.SendSuccess(ctx, http.StatusOK, constants.AuthRefreshTokenSuccess, res)
 }

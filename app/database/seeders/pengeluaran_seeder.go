@@ -40,7 +40,7 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 
 	var pengeluarans []domain.Pengeluaran
 
-	for storeID := int64(1); storeID <= 4; storeID++ {
+	for storeID := int64(1); storeID <= 1; storeID++ {
 		ownerID, ok := ownerMap[storeID]
 		if !ok {
 			continue
