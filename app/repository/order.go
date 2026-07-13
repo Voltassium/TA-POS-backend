@@ -13,11 +13,11 @@ import (
 )
 
 type OrderRepository interface {
-	CreateOrder(ctx context.Context, data *domain.Order) error
-	CountTodayOrders(ctx context.Context, storeID int64) (int, error)
-	UpdateOrderStatus(ctx context.Context, id string, status constants.OrderStatus) error
-	UpdateOrderAmount(ctx context.Context, id string, total float64) error
-	GetOrder(ctx context.Context, id string) (domain.Order, error)
+	CreateOrder(ctx context.Context, db bun.IDB, data *domain.Order) error
+	CountTodayOrders(ctx context.Context, db bun.IDB, storeID int64) (int, error)
+	UpdateOrderStatus(ctx context.Context, db bun.IDB, id string, status constants.OrderStatus) error
+	UpdateOrderAmount(ctx context.Context, db bun.IDB, id string, total float64) error
+	GetOrder(ctx context.Context, db bun.IDB, id string) (domain.Order, error)
 	ListOrders(ctx context.Context, req requests.ListOrder) ([]domain.Order, int, error)
 }
 
@@ -29,14 +29,13 @@ func NewOrderRepository(db *database.Database) OrderRepository {
 	return &orderRepository{db: db}
 }
 
-func (r *orderRepository) CreateOrder(ctx context.Context, data *domain.Order) error {
-	_, err := r.db.InitQuery(ctx).NewInsert().Model(data).Returning("id").Exec(ctx)
+func (r *orderRepository) CreateOrder(ctx context.Context, db bun.IDB, data *domain.Order) error {
+	_, err := db.NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
 }
 
-func (r *orderRepository) CountTodayOrders(ctx context.Context, storeID int64) (int, error) {
-	count, err := r.db.InitQuery(ctx).
-		NewSelect().
+func (r *orderRepository) CountTodayOrders(ctx context.Context, db bun.IDB, storeID int64) (int, error) {
+	count, err := db.NewSelect().
 		Model((*domain.Order)(nil)).
 		Where("store_id = ?", storeID).
 		Where("created_at >= CURRENT_DATE").
@@ -45,10 +44,9 @@ func (r *orderRepository) CountTodayOrders(ctx context.Context, storeID int64) (
 	return count, err
 }
 
-func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id string, status constants.OrderStatus) error {
+func (r *orderRepository) UpdateOrderStatus(ctx context.Context, db bun.IDB, id string, status constants.OrderStatus) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	_, err := r.db.InitQuery(ctx).
-		NewUpdate().
+	_, err := db.NewUpdate().
 		Model((*domain.Order)(nil)).
 		Set("status = ?", status).
 		Set("updated_at = NOW()").
@@ -58,10 +56,9 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id string, stat
 	return err
 }
 
-func (r *orderRepository) UpdateOrderAmount(ctx context.Context, id string, total float64) error {
+func (r *orderRepository) UpdateOrderAmount(ctx context.Context, db bun.IDB, id string, total float64) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	_, err := r.db.InitQuery(ctx).
-		NewUpdate().
+	_, err := db.NewUpdate().
 		Model((*domain.Order)(nil)).
 		Set("total_amount = ?", total).
 		Set("updated_at = NOW()").
@@ -71,11 +68,10 @@ func (r *orderRepository) UpdateOrderAmount(ctx context.Context, id string, tota
 	return err
 }
 
-func (r *orderRepository) GetOrder(ctx context.Context, id string) (domain.Order, error) {
+func (r *orderRepository) GetOrder(ctx context.Context, db bun.IDB, id string) (domain.Order, error) {
 	var res domain.Order
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	err := r.db.InitQuery(ctx).
-		NewSelect().
+	err := db.NewSelect().
 		Model(&res).
 		Relation("OrderItems", func(query *bun.SelectQuery) *bun.SelectQuery {
 			return query.Relation("Product")

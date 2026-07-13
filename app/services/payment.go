@@ -1,4 +1,4 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/constants"
@@ -46,7 +46,7 @@ func (s *paymentService) Process(ctx context.Context, payload requests.CreatePay
 	var payment domain.Payment
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		order, err := s.orderRepo.GetOrder(ctx, payload.OrderID)
+		order, err := s.orderRepo.GetOrder(ctx, tx, payload.OrderID)
 		if err != nil {
 			return err
 		}
@@ -64,11 +64,11 @@ func (s *paymentService) Process(ctx context.Context, payload requests.CreatePay
 			PaymentMethod: payload.PaymentMethod,
 			AmountPaid:    payload.AmountPaid,
 		}
-		if err := s.paymentRepo.CreatePayment(ctx, &payment); err != nil {
+		if err := s.paymentRepo.CreatePayment(ctx, tx, &payment); err != nil {
 			return err
 		}
 
-		if err := s.orderRepo.UpdateOrderStatus(ctx, order.ID, constants.OrderStatusPaid); err != nil {
+		if err := s.orderRepo.UpdateOrderStatus(ctx, tx, order.ID, constants.OrderStatusPaid); err != nil {
 			return err
 		}
 

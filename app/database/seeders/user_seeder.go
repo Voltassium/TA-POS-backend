@@ -29,7 +29,6 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 
 	var users []domain.User
 
-	// Superadmin
 	store1 := int64(1)
 	users = append(users, domain.User{
 		Email:    "admin@pos.com",
@@ -38,7 +37,6 @@ func SeedUsers(ctx context.Context, db *bun.DB) error {
 		StoreID:  &store1,
 	})
 
-	// Seed Owner, Chef, Staff for all 4 stores
 	for i := int64(1); i <= 4; i++ {
 		currStore := i
 		var ownerEmail, chefEmail, staffEmail string

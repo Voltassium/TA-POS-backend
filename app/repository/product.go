@@ -12,13 +12,13 @@ import (
 )
 
 type ProductRepository interface {
-	CreateProduct(ctx context.Context, data *domain.Product) error
-	UpdateProduct(ctx context.Context, data *domain.Product) error
+	CreateProduct(ctx context.Context, db bun.IDB, data *domain.Product) error
+	UpdateProduct(ctx context.Context, db bun.IDB, data *domain.Product) error
 	DeleteProduct(ctx context.Context, id string) error
 	GetProduct(ctx context.Context, id string) (domain.Product, error)
-	GetProductForUpdate(ctx context.Context, tx bun.Tx, id string) (domain.Product, error)
+	GetProductForUpdate(ctx context.Context, db bun.IDB, id string) (domain.Product, error)
 	ListProduct(ctx context.Context, req requests.ListProduct) ([]domain.Product, int, error)
-	UpdateStock(ctx context.Context, tx bun.Tx, productID string, change int) error
+	UpdateStock(ctx context.Context, db bun.IDB, productID string, change int) error
 }
 
 type productRepository struct {
@@ -29,14 +29,14 @@ func NewProductRepository(db *database.Database) ProductRepository {
 	return &productRepository{db: db}
 }
 
-func (r *productRepository) CreateProduct(ctx context.Context, data *domain.Product) error {
-	_, err := r.db.InitQuery(ctx).NewInsert().Model(data).Returning("id").Exec(ctx)
+func (r *productRepository) CreateProduct(ctx context.Context, db bun.IDB, data *domain.Product) error {
+	_, err := db.NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
 }
 
-func (r *productRepository) UpdateProduct(ctx context.Context, data *domain.Product) error {
+func (r *productRepository) UpdateProduct(ctx context.Context, db bun.IDB, data *domain.Product) error {
 	storeID := authentication.GetUserDataFromToken(ctx).StoreID
-	_, err := r.db.InitQuery(ctx).
+	_, err := db.
 		NewUpdate().
 		Model(data).
 		Where("id = ?", data.ID).
@@ -71,9 +71,11 @@ func (r *productRepository) GetProduct(ctx context.Context, id string) (domain.P
 	return res, err
 }
 
-func (r *productRepository) GetProductForUpdate(ctx context.Context, tx bun.Tx, id string) (domain.Product, error) {
+// GetProductForUpdate melakukan SELECT ... FOR UPDATE di dalam transaksi aktif
+// untuk mencegah race condition saat dua kasir memproses produk yang sama secara bersamaan.
+func (r *productRepository) GetProductForUpdate(ctx context.Context, db bun.IDB, id string) (domain.Product, error) {
 	var res domain.Product
-	err := tx.NewRaw(
+	err := db.NewRaw(
 		`SELECT p.*, c.id AS "category__id", c.name AS "category__name", c.store_id AS "category__store_id"
 		 FROM products AS p
 		 LEFT JOIN categories AS c ON c.id = p.category_id
@@ -110,8 +112,8 @@ func (r *productRepository) ListProduct(ctx context.Context, req requests.ListPr
 	return res, total, err
 }
 
-func (r *productRepository) UpdateStock(ctx context.Context, tx bun.Tx, productID string, change int) error {
-	_, err := tx.NewUpdate().
+func (r *productRepository) UpdateStock(ctx context.Context, db bun.IDB, productID string, change int) error {
+	_, err := db.NewUpdate().
 		Model((*domain.Product)(nil)).
 		Set("stock = stock + ?", change).
 		Set("is_available = CASE WHEN stock + ? <= 0 THEN false WHEN stock = 0 AND ? > 0 THEN true ELSE is_available END", change, change).

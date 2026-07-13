@@ -14,6 +14,7 @@ type StockHistory struct {
 	Change     int       `bun:"change,notnull"`
 	Reason     string    `bun:"reason,notnull"`
 	SourceType string    `bun:"source_type,notnull,default:'manual'"`
+	HargaBeli  float64   `bun:"harga_beli,notnull,default:0"`
 	CreatedAt  time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 
 	InitialStock int `bun:"initial_stock,notnull,default:0"`

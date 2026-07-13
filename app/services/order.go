@@ -60,7 +60,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 	var orderID string
 
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		todayCount, err := s.orderRepo.CountTodayOrders(ctx, storeID)
+		todayCount, err := s.orderRepo.CountTodayOrders(ctx, tx, storeID)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 
 		order := s.domainOrderFromCreate(payload, storeID, staffID)
 		order.OrderCode = orderCode
-		if err := s.orderRepo.CreateOrder(ctx, &order); err != nil {
+		if err := s.orderRepo.CreateOrder(ctx, tx, &order); err != nil {
 			return err
 		}
 		orderID = order.ID
@@ -86,7 +86,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 				}
 
 				orderItem := domainOrderItemFromCreate(order.ID, product.Price, item)
-				if err := s.orderItemRepo.CreateItem(ctx, &orderItem); err != nil {
+				if err := s.orderItemRepo.CreateItem(ctx, tx, &orderItem); err != nil {
 					return err
 				}
 				totalAmount += orderItem.Subtotal
@@ -105,7 +105,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 				}
 			}
 
-			if err := s.orderRepo.UpdateOrderAmount(ctx, order.ID, totalAmount); err != nil {
+			if err := s.orderRepo.UpdateOrderAmount(ctx, tx, order.ID, totalAmount); err != nil {
 				return err
 			}
 		}
@@ -116,7 +116,7 @@ func (s *orderService) Create(ctx context.Context, payload requests.CreateOrder)
 		return response.OrderDetail{}, err
 	}
 
-	order, err := s.orderRepo.GetOrder(ctx, orderID)
+	order, err := s.orderRepo.GetOrder(ctx, database.GetDB().DB, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err
 	}
@@ -136,7 +136,7 @@ func (s *orderService) List(ctx context.Context, payload requests.ListOrder) (dt
 }
 
 func (s *orderService) Detail(ctx context.Context, id string) (response.OrderDetail, error) {
-	order, err := s.orderRepo.GetOrder(ctx, id)
+	order, err := s.orderRepo.GetOrder(ctx, database.GetDB().DB, id)
 	if err != nil {
 		return response.OrderDetail{}, err
 	}
@@ -145,7 +145,8 @@ func (s *orderService) Detail(ctx context.Context, id string) (response.OrderDet
 }
 
 func (s *orderService) UpdateStatus(ctx context.Context, id string, payload requests.UpdateOrderStatus) error {
-	order, err := s.orderRepo.GetOrder(ctx, id)
+	dbConn := database.GetDB().DB
+	order, err := s.orderRepo.GetOrder(ctx, dbConn, id)
 	if err != nil {
 		return err
 	}
@@ -154,12 +155,12 @@ func (s *orderService) UpdateStatus(ctx context.Context, id string, payload requ
 		return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 	}
 
-	return s.orderRepo.UpdateOrderStatus(ctx, id, payload.Status)
+	return s.orderRepo.UpdateOrderStatus(ctx, dbConn, id, payload.Status)
 }
 
 func (s *orderService) Cancel(ctx context.Context, id string) error {
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		order, err := s.orderRepo.GetOrder(ctx, id)
+		order, err := s.orderRepo.GetOrder(ctx, tx, id)
 		if err != nil {
 			return err
 		}
@@ -168,7 +169,7 @@ func (s *orderService) Cancel(ctx context.Context, id string) error {
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
-		if err := s.orderRepo.UpdateOrderStatus(ctx, id, constants.OrderStatusCancelled); err != nil {
+		if err := s.orderRepo.UpdateOrderStatus(ctx, tx, id, constants.OrderStatusCancelled); err != nil {
 			return err
 		}
 
@@ -194,7 +195,7 @@ func (s *orderService) Cancel(ctx context.Context, id string) error {
 func (s *orderService) AddItem(ctx context.Context, orderID string, payload requests.AddOrderItem) (response.OrderDetail, error) {
 	var detail response.OrderDetail
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		order, err := s.orderRepo.GetOrder(ctx, orderID)
+		order, err := s.orderRepo.GetOrder(ctx, tx, orderID)
 		if err != nil {
 			return err
 		}
@@ -213,7 +214,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 		}
 
 		item := domainOrderItemFromCreate(orderID, product.Price, payload)
-		if err := s.orderItemRepo.CreateItem(ctx, &item); err != nil {
+		if err := s.orderItemRepo.CreateItem(ctx, tx, &item); err != nil {
 			return err
 		}
 
@@ -230,12 +231,12 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 			return err
 		}
 
-		total, err := s.orderItemRepo.SumSubtotalByOrder(ctx, orderID)
+		total, err := s.orderItemRepo.SumSubtotalByOrder(ctx, tx, orderID)
 		if err != nil {
 			return err
 		}
 
-		if err := s.orderRepo.UpdateOrderAmount(ctx, orderID, total); err != nil {
+		if err := s.orderRepo.UpdateOrderAmount(ctx, tx, orderID, total); err != nil {
 			return err
 		}
 
@@ -245,7 +246,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 		return detail, err
 	}
 
-	order, err := s.orderRepo.GetOrder(ctx, orderID)
+	order, err := s.orderRepo.GetOrder(ctx, database.GetDB().DB, orderID)
 	if err != nil {
 		return detail, err
 	}
@@ -256,7 +257,7 @@ func (s *orderService) AddItem(ctx context.Context, orderID string, payload requ
 func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID string) (response.OrderDetail, error) {
 	var detail response.OrderDetail
 	err := database.RunInTx(ctx, database.GetDB(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		order, err := s.orderRepo.GetOrder(ctx, orderID)
+		order, err := s.orderRepo.GetOrder(ctx, tx, orderID)
 		if err != nil {
 			return err
 		}
@@ -265,7 +266,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order cannot be modified")
 		}
 
-		item, err := s.orderItemRepo.GetItem(ctx, itemID)
+		item, err := s.orderItemRepo.GetItem(ctx, tx, itemID)
 		if err != nil {
 			return err
 		}
@@ -273,7 +274,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return internal_err.NewDefaultError(http.StatusBadRequest, "Order item does not belong to order")
 		}
 
-		if err := s.orderItemRepo.DeleteItem(ctx, itemID); err != nil {
+		if err := s.orderItemRepo.DeleteItem(ctx, tx, itemID); err != nil {
 			return err
 		}
 
@@ -290,12 +291,12 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 			return err
 		}
 
-		total, err := s.orderItemRepo.SumSubtotalByOrder(ctx, orderID)
+		total, err := s.orderItemRepo.SumSubtotalByOrder(ctx, tx, orderID)
 		if err != nil {
 			return err
 		}
 
-		if err := s.orderRepo.UpdateOrderAmount(ctx, orderID, total); err != nil {
+		if err := s.orderRepo.UpdateOrderAmount(ctx, tx, orderID, total); err != nil {
 			return err
 		}
 
@@ -305,7 +306,7 @@ func (s *orderService) RemoveItem(ctx context.Context, orderID string, itemID st
 		return detail, err
 	}
 
-	order, err := s.orderRepo.GetOrder(ctx, orderID)
+	order, err := s.orderRepo.GetOrder(ctx, database.GetDB().DB, orderID)
 	if err != nil {
 		return detail, err
 	}

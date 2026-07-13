@@ -1,10 +1,11 @@
-﻿package services
+package services
 
 import (
 	"backend-ta/app/constants"
 	"backend-ta/app/dto/requests"
 	"backend-ta/app/dto/response"
 	"backend-ta/app/repository"
+	"backend-ta/pkg/database"
 	internal_err "backend-ta/pkg/errors"
 	"context"
 	"fmt"
@@ -31,7 +32,9 @@ func NewKitchenSrv(
 }
 
 func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string, itemID string, payload requests.UpdateServedQty) (response.OrderDetail, error) {
-	order, err := s.orderRepo.GetOrder(ctx, orderID)
+	dbConn := database.GetDB().DB
+
+	order, err := s.orderRepo.GetOrder(ctx, dbConn, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err
 	}
@@ -43,7 +46,7 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 		)
 	}
 
-	item, err := s.orderItemRepo.GetItem(ctx, itemID)
+	item, err := s.orderItemRepo.GetItem(ctx, dbConn, itemID)
 	if err != nil {
 		return response.OrderDetail{}, err
 	}
@@ -84,12 +87,12 @@ func (s *kitchenService) UpdateItemServedQty(ctx context.Context, orderID string
 	}
 
 	if allServed {
-		if err := s.orderRepo.UpdateOrderStatus(ctx, orderID, constants.OrderStatusCompleted); err != nil {
+		if err := s.orderRepo.UpdateOrderStatus(ctx, dbConn, orderID, constants.OrderStatusCompleted); err != nil {
 			return response.OrderDetail{}, err
 		}
 	}
 
-	refreshed, err := s.orderRepo.GetOrder(ctx, orderID)
+	refreshed, err := s.orderRepo.GetOrder(ctx, dbConn, orderID)
 	if err != nil {
 		return response.OrderDetail{}, err
 	}
