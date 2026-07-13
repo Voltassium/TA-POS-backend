@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for user lookup by store
 CREATE INDEX IF NOT EXISTS idx_users_store_id ON users(store_id);
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -27,7 +26,6 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for category lookup by store
 CREATE INDEX IF NOT EXISTS idx_categories_store_id ON categories(store_id);
 
 CREATE TABLE IF NOT EXISTS products (
@@ -45,7 +43,6 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for product lookups
 CREATE INDEX IF NOT EXISTS idx_products_store_category ON products(store_id, category_id);
 CREATE UNIQUE INDEX IF NOT EXISTS products_sku_store_id_idx ON products(sku, store_id) WHERE sku IS NOT NULL;
 
@@ -62,7 +59,6 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for fast order fetching, statistics, and lookup by code
 CREATE INDEX IF NOT EXISTS idx_orders_store_status_date ON orders(store_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_orders_order_code ON orders(order_code);
 
@@ -78,7 +74,6 @@ CREATE TABLE IF NOT EXISTS order_items (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for fetching order items quickly
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
 CREATE TABLE IF NOT EXISTS payments (
@@ -89,7 +84,6 @@ CREATE TABLE IF NOT EXISTS payments (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for finding payment by order
 CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
 
 CREATE TABLE IF NOT EXISTS stock_histories (
@@ -99,19 +93,14 @@ CREATE TABLE IF NOT EXISTS stock_histories (
     initial_stock INTEGER NOT NULL DEFAULT 0,
     final_stock INTEGER NOT NULL DEFAULT 0,
     reason VARCHAR(255) NOT NULL,
-    -- source_type membedakan jenis perubahan stok:
-    -- 'purchase' = restock kulakan (dihitung sebagai COGS)
-    -- 'sale'     = pengurangan stok karena penjualan
-    -- 'return'   = penambahan stok kembali akibat pembatalan order (BUKAN pengeluaran)
-    -- 'manual'   = penyesuaian manual / stok awal
     source_type VARCHAR(50) NOT NULL DEFAULT 'manual'
                 CHECK (source_type IN ('purchase', 'sale', 'return', 'manual')),
+    harga_beli NUMERIC(12, 2) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index for fetching stock history by product
+
 CREATE INDEX IF NOT EXISTS idx_stock_histories_product_id ON stock_histories(product_id);
--- Index for COGS query on statistics (filter by source_type)
 CREATE INDEX IF NOT EXISTS idx_stock_histories_source_type ON stock_histories(source_type, created_at);
 
 CREATE TABLE IF NOT EXISTS pengeluaran (
@@ -126,5 +115,4 @@ CREATE TABLE IF NOT EXISTS pengeluaran (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index for calculating daily expenses
 CREATE INDEX IF NOT EXISTS pengeluaran_store_id_tanggal_idx ON pengeluaran(store_id, tanggal);

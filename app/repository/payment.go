@@ -1,13 +1,15 @@
-﻿package repository
+package repository
 
 import (
 	"backend-ta/app/domain"
 	"backend-ta/pkg/database"
 	"context"
+
+	"github.com/uptrace/bun"
 )
 
 type PaymentRepository interface {
-	CreatePayment(ctx context.Context, data *domain.Payment) error
+	CreatePayment(ctx context.Context, db bun.IDB, data *domain.Payment) error
 	GetPaymentByOrder(ctx context.Context, orderID string) (domain.Payment, error)
 }
 
@@ -19,8 +21,8 @@ func NewPaymentRepository(db *database.Database) PaymentRepository {
 	return &paymentRepository{db: db}
 }
 
-func (r *paymentRepository) CreatePayment(ctx context.Context, data *domain.Payment) error {
-	_, err := r.db.InitQuery(ctx).NewInsert().Model(data).Returning("id").Exec(ctx)
+func (r *paymentRepository) CreatePayment(ctx context.Context, db bun.IDB, data *domain.Payment) error {
+	_, err := db.NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
 }
 

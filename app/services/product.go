@@ -61,16 +61,21 @@ func (s *productService) Create(ctx context.Context, payload requests.CreateProd
 		if product.Stock <= 0 {
 			product.IsAvailable = false
 		}
-		if err := s.productRepo.CreateProduct(ctx, &product); err != nil {
+		if err := s.productRepo.CreateProduct(ctx, tx, &product); err != nil {
 			return err
 		}
 
 		if product.Stock > 0 {
+			var hargaBeli float64
+			if product.HargaBeli != nil {
+				hargaBeli = *product.HargaBeli
+			}
 			history := domain.StockHistory{
 				ProductID:  product.ID,
 				Change:     product.Stock,
 				Reason:     "Stok Awal Produk Baru",
-				SourceType: constants.StockSourcePurchase, // stok awal dianggap pembelian
+				SourceType: constants.StockSourcePurchase,
+				HargaBeli:  hargaBeli,
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -135,11 +140,11 @@ func (s *productService) Update(ctx context.Context, id string, payload requests
 
 		if product.Stock <= 0 {
 			product.IsAvailable = false
-		} else if payload.IsAvailable == nil && product.Stock > 0 && stockChange != 0 && product.Stock - stockChange <= 0 {
+		} else if payload.IsAvailable == nil && product.Stock > 0 && stockChange != 0 && product.Stock-stockChange <= 0 {
 			product.IsAvailable = true
 		}
 
-		if err := s.productRepo.UpdateProduct(ctx, &product); err != nil {
+		if err := s.productRepo.UpdateProduct(ctx, tx, &product); err != nil {
 			return err
 		}
 
@@ -148,7 +153,7 @@ func (s *productService) Update(ctx context.Context, id string, payload requests
 				ProductID:  product.ID,
 				Change:     stockChange,
 				Reason:     "Penyesuaian Stok (Manual)",
-				SourceType: constants.StockSourceManual, // penyesuaian manual, bukan pembelian
+				SourceType: constants.StockSourceManual,
 			}
 			if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 				return err
@@ -198,7 +203,7 @@ func (s *productService) Restock(ctx context.Context, id string, payload request
 		product.Stock += payload.JumlahStok
 		product.IsAvailable = true
 
-		if err := s.productRepo.UpdateProduct(ctx, &product); err != nil {
+		if err := s.productRepo.UpdateProduct(ctx, tx, &product); err != nil {
 			return err
 		}
 
@@ -206,7 +211,8 @@ func (s *productService) Restock(ctx context.Context, id string, payload request
 			ProductID:  product.ID,
 			Change:     payload.JumlahStok,
 			Reason:     "Pembelian Stok (Kulakan)",
-			SourceType: constants.StockSourcePurchase, // B: restock kulakan = pembelian = dihitung sebagai COGS
+			SourceType: constants.StockSourcePurchase,
+			HargaBeli:  payload.HargaBeli,
 		}
 		if err := s.stockHistoryRepo.CreateStockHistory(ctx, tx, &history); err != nil {
 			return err
@@ -216,4 +222,3 @@ func (s *productService) Restock(ctx context.Context, id string, payload request
 	})
 	return err
 }
-

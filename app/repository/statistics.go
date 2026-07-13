@@ -67,7 +67,7 @@ func (r *statisticsRepository) GetCogsChart(ctx context.Context, startDate, endD
 		TableExpr("stock_histories AS sh").
 		Join("JOIN products AS p ON sh.product_id = p.id").
 		ColumnExpr("TO_CHAR(sh.created_at, ?) AS date", dateFormat).
-		ColumnExpr("COALESCE(SUM(sh.change * p.harga_beli), 0) AS total").
+		ColumnExpr("COALESCE(SUM(sh.change * sh.harga_beli), 0) AS total").
 		Where("p.store_id = ?", authentication.GetUserDataFromToken(ctx).StoreID).
 		Where("sh.created_at >= ?", startDate).
 		Where("sh.created_at <= ?", endDate).
@@ -136,7 +136,7 @@ func (r *statisticsRepository) GetDashboardStats(ctx context.Context, startDate,
 	err = r.db.DB.NewSelect().
 		TableExpr("stock_histories AS sh").
 		Join("JOIN products AS p ON sh.product_id = p.id").
-		ColumnExpr("COALESCE(SUM(sh.change * p.harga_beli), 0)").
+		ColumnExpr("COALESCE(SUM(sh.change * sh.harga_beli), 0)").
 		Where("p.store_id = ?", storeID).
 		Where("sh.created_at >= ?", startDate).
 		Where("sh.created_at <= ?", endDate).

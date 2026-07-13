@@ -11,7 +11,7 @@ import (
 )
 
 type StockHistoryRepository interface {
-	CreateStockHistory(ctx context.Context, tx bun.Tx, data *domain.StockHistory) error
+	CreateStockHistory(ctx context.Context, db bun.IDB, data *domain.StockHistory) error
 	ListStockHistory(ctx context.Context, req requests.ListStockHistory) ([]domain.StockHistory, int, error)
 }
 
@@ -23,9 +23,12 @@ func NewStockHistoryRepository(db *database.Database) StockHistoryRepository {
 	return &stockHistoryRepository{db: db}
 }
 
-func (r *stockHistoryRepository) CreateStockHistory(ctx context.Context, tx bun.Tx, data *domain.StockHistory) error {
+// CreateStockHistory menyimpan riwayat perubahan stok dalam transaksi aktif.
+// Membaca stok terkini dari DB (melalui db yang sama agar dalam transaksi yang sama)
+// untuk menghitung InitialStock dan FinalStock secara akurat.
+func (r *stockHistoryRepository) CreateStockHistory(ctx context.Context, db bun.IDB, data *domain.StockHistory) error {
 	var product domain.Product
-	err := tx.NewSelect().
+	err := db.NewSelect().
 		Model(&product).
 		Column("stock").
 		Where("id = ?", data.ProductID).
@@ -37,7 +40,7 @@ func (r *stockHistoryRepository) CreateStockHistory(ctx context.Context, tx bun.
 	data.FinalStock = product.Stock
 	data.InitialStock = product.Stock - data.Change
 
-	_, err = tx.NewInsert().Model(data).Returning("id").Exec(ctx)
+	_, err = db.NewInsert().Model(data).Returning("id").Exec(ctx)
 	return err
 }
 
