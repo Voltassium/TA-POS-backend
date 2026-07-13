@@ -31,7 +31,7 @@ bin/
 
 # Env files
 .env
-pkg/config/files/env.yaml
+
 
 # Go workspace
 go.work
