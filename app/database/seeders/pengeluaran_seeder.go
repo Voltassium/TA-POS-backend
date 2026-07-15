@@ -12,26 +12,26 @@ import (
 )
 
 func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
-	count, err := db.NewSelect().Model((*domain.Pengeluaran)(nil)).Count(ctx)
+	var stores []domain.Store
+	err := db.NewSelect().Model(&stores).Scan(ctx)
 	if err != nil {
 		return err
 	}
 
-	if count > 0 {
-		fmt.Println("[SEEDER] Pengeluaran table already has data, skipping...")
-		return nil
-	}
-
-	var owners []domain.User
-	err = db.NewSelect().Model(&owners).Where("role = ?", constants.UserRoleOwner).Scan(ctx)
+	var users []domain.User
+	err = db.NewSelect().Model(&users).Where("role = ? OR role = ?", constants.UserRoleOwner, constants.UserRoleSuperadmin).Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("owners not found: %w", err)
+		return fmt.Errorf("users not found: %w", err)
 	}
 
 	ownerMap := make(map[int64]string)
-	for _, o := range owners {
-		if o.StoreID != nil {
-			ownerMap[*o.StoreID] = o.ID
+	var fallbackUserID string
+	for _, u := range users {
+		if fallbackUserID == "" {
+			fallbackUserID = u.ID
+		}
+		if u.StoreID != nil {
+			ownerMap[*u.StoreID] = u.ID
 		}
 	}
 
@@ -40,9 +40,24 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 
 	var pengeluarans []domain.Pengeluaran
 
-	for storeID := int64(1); storeID <= 1; storeID++ {
+	for _, store := range stores {
+		storeID := store.ID
+		count, err := db.NewSelect().
+			Model((*domain.Pengeluaran)(nil)).
+			Where("store_id = ?", storeID).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			continue
+		}
+
 		ownerID, ok := ownerMap[storeID]
 		if !ok {
+			ownerID = fallbackUserID
+		}
+		if ownerID == "" {
 			continue
 		}
 
@@ -53,7 +68,7 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 					Tanggal:     d.Add(time.Hour * 10),
 					Category:    "Listrik & Air",
 					Description: sp("Tagihan listrik dan air bulanan"),
-					Amount:      1500000 + float64(rand.Intn(500000)),
+					Amount:      1500000 + float64(rand.Intn(500)*1000),
 					CreatedBy:   ownerID,
 					CreatedAt:   d.Add(time.Hour * 10),
 					UpdatedAt:   d.Add(time.Hour * 10),
@@ -86,9 +101,9 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 				domain.Pengeluaran{
 					StoreID:     storeID,
 					Tanggal:     d.Add(time.Hour * 9),
-					Category:    "Bahan Baku",
+					Category:    "Belanja Harian",
 					Description: sp("Belanja bahan baku nasi padang"),
-					Amount:      3000000 + float64(rand.Intn(1500000)),
+					Amount:      3000000 + float64(rand.Intn(1500)*1000),
 					CreatedBy:   ownerID,
 					CreatedAt:   d.Add(time.Hour * 9),
 					UpdatedAt:   d.Add(time.Hour * 9),
@@ -98,10 +113,25 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 					Tanggal:     d.Add(time.Hour * 11),
 					Category:    "Operasional",
 					Description: sp("Kotak kemasan, sendok, plastik, tisu"),
-					Amount:      500000 + float64(rand.Intn(300000)),
+					Amount:      500000 + float64(rand.Intn(300)*1000),
 					CreatedBy:   ownerID,
 					CreatedAt:   d.Add(time.Hour * 11),
 					UpdatedAt:   d.Add(time.Hour * 11),
+				},
+			)
+		}
+
+		for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+			pengeluarans = append(pengeluarans,
+				domain.Pengeluaran{
+					StoreID:     storeID,
+					Tanggal:     d.Add(time.Hour * 8),
+					Category:    "Belanja Harian",
+					Description: sp("Belanja kebutuhan harian operasional toko"),
+					Amount:      30000 + float64(rand.Intn(771)*1000),
+					CreatedBy:   ownerID,
+					CreatedAt:   d.Add(time.Hour * 8),
+					UpdatedAt:   d.Add(time.Hour * 8),
 				},
 			)
 		}
@@ -112,9 +142,11 @@ func SeedPengeluaran(ctx context.Context, db *bun.DB) error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("[SEEDER] Pengeluaran seeded successfully: %d items created\n", len(pengeluarans))
+	} else {
+		fmt.Println("[SEEDER] Pengeluaran seeding skipped (already has data for all stores)")
 	}
 
-	fmt.Println("[SEEDER] Pengeluaran seeded successfully")
 	return nil
 }
 

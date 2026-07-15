@@ -58,9 +58,17 @@ func (r *stockHistoryRepository) ListStockHistory(ctx context.Context, req reque
 		q.Where("EXISTS (SELECT 1 FROM products p WHERE p.id = stock_history.product_id AND p.name ILIKE ?)", "%"+req.Search+"%")
 	}
 
+	orderBy := req.OrderBy
+	if orderBy == "updated_at" || orderBy == "created_at" || orderBy == "" {
+		orderBy = "stock_history.created_at"
+	} else {
+		// Secure prefixing for standard fields
+		orderBy = "stock_history." + orderBy
+	}
+
 	q.Limit(req.PageSize).
 		Offset(req.CalculateOffset()).
-		Order(fmt.Sprintf("%s %s", req.OrderBy, req.OrderDir))
+		Order(fmt.Sprintf("%s %s", orderBy, req.OrderDir))
 
 	total, err := q.ScanAndCount(ctx)
 	return res, total, err

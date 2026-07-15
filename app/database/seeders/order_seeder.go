@@ -55,6 +55,11 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 	var payments []domain.Payment
 	var stockHistories []domain.StockHistory
 
+	currentStockMap := make(map[string]int)
+	for _, p := range allProducts {
+		currentStockMap[p.ID] = p.Stock
+	}
+
 	indonesianNames := []string{
 		"Ahmad", "Budi", "Siti", "Dewi", "Andi", "Joko", "Rian", "Indra", "Agus", "Rina",
 		"Sari", "Aditya", "Hendra", "Mega", "Dian", "Putra", "Putri", "Tri", "Sri", "Wahyu",
@@ -128,11 +133,29 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 					})
 
 					if status == constants.OrderStatusCompleted {
+						initialStock := currentStockMap[prod.ID]
+						if initialStock < qty {
+							restockQty := 100
+							stockHistories = append(stockHistories, domain.StockHistory{
+								ProductID:    prod.ID,
+								Change:       restockQty,
+								InitialStock: initialStock,
+								FinalStock:   initialStock + restockQty,
+								Reason:       "Restock Otomatis (Seeder)",
+								CreatedAt:    orderTime.Add(-time.Second),
+							})
+							initialStock += restockQty
+						}
+						finalStock := initialStock - qty
+						currentStockMap[prod.ID] = finalStock
+
 						stockHistories = append(stockHistories, domain.StockHistory{
-							ProductID: prod.ID,
-							Change:    -qty,
-							Reason:    fmt.Sprintf("Order %s Created", orderCode),
-							CreatedAt: orderTime,
+							ProductID:    prod.ID,
+							Change:       -qty,
+							InitialStock: initialStock,
+							FinalStock:   finalStock,
+							Reason:       fmt.Sprintf("Order %s Created", orderCode),
+							CreatedAt:    orderTime,
 						})
 					}
 				}
@@ -216,6 +239,18 @@ func SeedOrders(ctx context.Context, db *bun.DB) error {
 		_, err = db.NewInsert().Model(&batch).Exec(ctx)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Update final stock in products table
+	for productID, finalStock := range currentStockMap {
+		_, err = db.NewUpdate().
+			Model((*domain.Product)(nil)).
+			Set("stock = ?", finalStock).
+			Where("id = ?", productID).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update final product stock: %w", err)
 		}
 	}
 

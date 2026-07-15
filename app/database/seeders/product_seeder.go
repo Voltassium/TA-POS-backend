@@ -10,24 +10,16 @@ import (
 )
 
 func SeedProducts(ctx context.Context, db *bun.DB) error {
-	count, err := db.NewSelect().Model((*domain.Product)(nil)).Count(ctx)
+	var stores []domain.Store
+	err := db.NewSelect().Model(&stores).Scan(ctx)
 	if err != nil {
 		return err
-	}
-
-	if count > 0 {
-		fmt.Println("[SEEDER] Products table already has data, skipping...")
-		return nil
 	}
 
 	var categories []domain.Category
 	err = db.NewSelect().Model(&categories).Order("id ASC").Scan(ctx)
 	if err != nil {
 		return err
-	}
-
-	if len(categories) == 0 {
-		return fmt.Errorf("no categories found, please seed categories first")
 	}
 
 	type catKey struct {
@@ -44,11 +36,27 @@ func SeedProducts(ctx context.Context, db *bun.DB) error {
 
 	var products []domain.Product
 
-	for storeID := int64(1); storeID <= 1; storeID++ {
+	for _, store := range stores {
+		storeID := store.ID
+		count, err := db.NewSelect().
+			Model((*domain.Product)(nil)).
+			Where("store_id = ?", storeID).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			continue
+		}
+
 		makananID := categoryMap[catKey{StoreID: storeID, Name: "Makanan Utama"}]
 		laukID := categoryMap[catKey{StoreID: storeID, Name: "Lauk Sampingan"}]
 		minumanID := categoryMap[catKey{StoreID: storeID, Name: "Minuman & Jus"}]
 		camilanID := categoryMap[catKey{StoreID: storeID, Name: "Camilan & Dessert"}]
+
+		if makananID == "" || laukID == "" || minumanID == "" || camilanID == "" {
+			continue
+		}
 
 		products = append(products,
 			// Makanan Utama (Olahan)
@@ -77,37 +85,38 @@ func SeedProducts(ctx context.Context, db *bun.DB) error {
 		)
 	}
 
-	_, err = db.NewInsert().Model(&products).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	var stockHistories []domain.StockHistory
-	febFirst := time.Date(2026, 2, 1, 8, 0, 0, 0, time.Local)
-
-	var insertedProducts []domain.Product
-	db.NewSelect().Model(&insertedProducts).Scan(ctx)
-
-	for _, p := range insertedProducts {
-		if p.Stock > 0 {
-			stockHistories = append(stockHistories, domain.StockHistory{
-				ProductID:    p.ID,
-				Change:       p.Stock,
-				InitialStock: 0,
-				FinalStock:   p.Stock,
-				Reason:       "Inisialisasi Stok Awal (Seeder)",
-				CreatedAt:    febFirst,
-			})
-		}
-	}
-
-	if len(stockHistories) > 0 {
-		_, err = db.NewInsert().Model(&stockHistories).Exec(ctx)
+	if len(products) > 0 {
+		_, err = db.NewInsert().Model(&products).Exec(ctx)
 		if err != nil {
 			return err
 		}
+
+		var stockHistories []domain.StockHistory
+		febFirst := time.Date(2026, 2, 1, 8, 0, 0, 0, time.Local)
+
+		for _, p := range products {
+			if p.Stock > 0 {
+				stockHistories = append(stockHistories, domain.StockHistory{
+					ProductID:    p.ID,
+					Change:       p.Stock,
+					InitialStock: 0,
+					FinalStock:   p.Stock,
+					Reason:       "Inisialisasi Stok Awal (Seeder)",
+					CreatedAt:    febFirst,
+				})
+			}
+		}
+
+		if len(stockHistories) > 0 {
+			_, err = db.NewInsert().Model(&stockHistories).Exec(ctx)
+			if err != nil {
+				return err
+			}
+		}
+		fmt.Printf("[SEEDER] Products and initial StockHistory seeded successfully: %d products created\n", len(products))
+	} else {
+		fmt.Println("[SEEDER] Products seeding skipped (already has data for all stores)")
 	}
 
-	fmt.Println("[SEEDER] Products and initial StockHistory seeded successfully")
 	return nil
 }
